@@ -1,8 +1,10 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Users, Calendar as CalendarIcon, BarChart2, Settings } from 'lucide-react';
+import { Home, Users, Calendar as CalendarIcon, BarChart2, Settings, LogOut } from 'lucide-react';
+import { useAppContext } from '../context/AppContext';
 import './Sidebar.css';
 
 const Sidebar = () => {
+  const { signOut } = useAppContext();
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
@@ -24,10 +26,10 @@ const Sidebar = () => {
         </NavLink>
       </nav>
 
-      <div className="sidebar-footer">
-        <button className="nav-item">
-          <Settings size={20} />
-          <span>Configurações</span>
+      <div className="sidebar-footer" style={{ padding: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+        <button className="nav-item" style={{ width: '100%', justifyContent: 'flex-start' }} onClick={signOut}>
+          <LogOut size={20} />
+          <span>Sair do Sistema</span>
         </button>
       </div>
     </aside>

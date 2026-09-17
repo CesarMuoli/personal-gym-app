@@ -11,7 +11,7 @@ import './StudentProfile.css';
 const StudentProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { students, loadProgression, emotionalHistory, addLoad, addEmotionalScore } = useAppContext();
+  const { students, loadProgression, emotionalHistory, addLoad, addEmotionalScore, uploadEvaluationPhoto } = useAppContext();
   
   const [activeTab, setActiveTab] = useState('overview');
   const [emotionalScore, setEmotionalScore] = useState(null);
@@ -40,6 +40,20 @@ const StudentProfile = () => {
       date: new Date().toISOString().split('T')[0]
     });
     setEmotionalScore(null);
+  };
+
+  const handlePhotoUpload = async (e, type) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Mostra um loading rápido
+    toast.loading(`Enviando foto de ${type === 'before' ? 'Antes' : 'Depois'}...`, { id: 'upload' });
+    const url = await uploadEvaluationPhoto(student.id, type, file);
+    if (url) {
+      toast.success('Concluído!', { id: 'upload' });
+    } else {
+      toast.dismiss('upload');
+    }
   };
 
   if (!student) {
@@ -148,15 +162,58 @@ const StudentProfile = () => {
         {activeTab === 'physical' && (
           <div className="tab-pane physical-tab">
             <Card title="Comparativo Visual">
-              <div className="comparison-view">
-                <div className="photo-container">
-                  <div className="photo-placeholder">Foto Antes</div>
-                  <span>Início do Plano - {student.weight + 5}kg</span>
+              <div className="comparison-view" style={{ display: 'flex', gap: '2rem', justifyContent: 'center', marginTop: '2rem' }}>
+                
+                {/* Foto Antes */}
+                <div className="photo-container" style={{ textAlign: 'center', flex: 1 }}>
+                  <label style={{ cursor: 'pointer', display: 'block' }}>
+                    <div className="photo-placeholder" style={{ 
+                      height: '350px', 
+                      borderRadius: '16px', 
+                      border: '2px dashed var(--border-color)', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      overflow: 'hidden',
+                      backgroundColor: 'rgba(255,255,255,0.02)',
+                      marginBottom: '1rem'
+                    }}>
+                      {student.photo_before ? (
+                        <img src={student.photo_before} alt="Antes" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <span style={{ color: 'var(--text-secondary)' }}>+ Adicionar Foto (Antes)</span>
+                      )}
+                    </div>
+                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handlePhotoUpload(e, 'before')} />
+                  </label>
+                  <span style={{ fontWeight: 500, color: 'var(--text-secondary)' }}>Início do Plano</span>
                 </div>
-                <div className="photo-container">
-                  <div className="photo-placeholder" style={{ borderColor: 'var(--success)' }}>Foto Atual</div>
-                  <span>Hoje - {student.weight}kg</span>
+
+                {/* Foto Depois */}
+                <div className="photo-container" style={{ textAlign: 'center', flex: 1 }}>
+                  <label style={{ cursor: 'pointer', display: 'block' }}>
+                    <div className="photo-placeholder" style={{ 
+                      height: '350px', 
+                      borderRadius: '16px', 
+                      border: '2px dashed var(--success)', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      overflow: 'hidden',
+                      backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                      marginBottom: '1rem'
+                    }}>
+                      {student.photo_after ? (
+                        <img src={student.photo_after} alt="Depois" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <span style={{ color: 'var(--success)' }}>+ Adicionar Foto (Atual)</span>
+                      )}
+                    </div>
+                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handlePhotoUpload(e, 'after')} />
+                  </label>
+                  <span style={{ fontWeight: 500, color: 'var(--success)' }}>Evolução Atual</span>
                 </div>
+
               </div>
             </Card>
           </div>
