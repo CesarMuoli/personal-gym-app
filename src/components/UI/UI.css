@@ -1,0 +1,82 @@
+/* Card */
+.card {
+  padding: 1.5rem;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+/* Emotional Scale */
+.emotional-scale-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 2rem;
+  background-color: rgba(38, 38, 38, 0.4);
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  width: 100%;
+}
+
+.emotional-scale-question {
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.scale-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.scale-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.scale-points {
+  display: flex;
+  gap: 0.25rem;
+  flex: 1;
+  justify-content: space-between;
+}
+
+.scale-point {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.scale-point:hover, .scale-point.hovered {
+  background-color: var(--accent-hover);
+  color: var(--bg-primary);
+  transform: scale(1.1);
+}
+
+.scale-point.selected {
+  background-color: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+  transform: scale(1.1);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+}
