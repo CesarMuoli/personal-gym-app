@@ -27,7 +27,7 @@ const Calendar = () => {
   if (loading) return <div style={{ padding: '2rem' }}>Carregando agenda...</div>;
 
   return (
-    <div className="calendar-page">
+    <div className="calendar-page fade-in-up">
       <header className="page-header flex-between">
         <div>
           <h1 className="title">Agenda Inteligente</h1>

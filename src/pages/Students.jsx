@@ -35,7 +35,7 @@ const Students = () => {
   if (loading) return <div style={{ padding: '2rem' }}>Carregando alunos...</div>;
 
   return (
-    <div className="students-page">
+    <div className="students-page fade-in-up">
       <header className="page-header flex-between">
         <div>
           <h1 className="title">Alunos</h1>

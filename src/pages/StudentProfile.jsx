@@ -47,7 +47,7 @@ const StudentProfile = () => {
   }
 
   return (
-    <div className="profile-page">
+    <div className="profile-page fade-in-up">
       <header className="profile-header">
         <button className="icon-btn-transparent" onClick={() => navigate('/students')}><ArrowLeft size={18} /> Voltar para Alunos</button>
         <div className="profile-info flex-between">

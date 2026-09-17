@@ -15,7 +15,7 @@ const Dashboard = () => {
   const pendingAssessments = calendarEvents.filter(e => e.type === 'assessment').length;
 
   return (
-    <div className="dashboard-page">
+    <div className="dashboard-page fade-in-up">
       <header className="dashboard-header">
         <div>
           <h1 className="title">Dashboard</h1>
