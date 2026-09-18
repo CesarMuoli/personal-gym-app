@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Users, Calendar as CalendarIcon, LogOut, DollarSign, Dumbbell, Menu, X } from 'lucide-react';
+import { Home, Users, Calendar as CalendarIcon, LogOut, DollarSign, Dumbbell, Menu, X, ShieldCheck } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import './Sidebar.css';
 
 const Sidebar = () => {
-  const { signOut } = useAppContext();
+  const { session, signOut } = useAppContext();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const closeMobile = () => setMobileOpen(false);
@@ -50,9 +50,23 @@ const Sidebar = () => {
           </NavLink>
         </nav>
 
-        <div className="sidebar-footer" style={{ padding: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <button className="nav-item" style={{ width: '100%', justifyContent: 'flex-start' }} onClick={signOut}>
-            <LogOut size={20} />
+        <div className="sidebar-footer">
+          {session?.user && (
+            <div className="sidebar-user-card">
+              <div className="user-icon-badge">
+                <ShieldCheck size={16} color="var(--accent-color)" />
+              </div>
+              <div className="user-details-mini">
+                <span className="user-email-text" title={session.user.email}>
+                  {session.user.email}
+                </span>
+                <span className="user-role-tag">Personal Trainer</span>
+              </div>
+            </div>
+          )}
+
+          <button className="nav-item logout-btn" onClick={signOut}>
+            <LogOut size={18} />
             <span>Sair do Sistema</span>
           </button>
         </div>

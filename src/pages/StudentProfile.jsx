@@ -6,7 +6,7 @@ import Modal from '../components/UI/Modal';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../context/AppContext';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { User, Activity, Dumbbell, Ruler, ArrowLeft, TrendingUp, DollarSign } from 'lucide-react';
+import { User, Activity, Dumbbell, Ruler, ArrowLeft, TrendingUp, DollarSign, Plus } from 'lucide-react';
 import './StudentProfile.css';
 
 const StudentProfile = () => {
@@ -17,6 +17,7 @@ const StudentProfile = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [emotionalScore, setEmotionalScore] = useState(null);
   const [isLoadModalOpen, setIsLoadModalOpen] = useState(false);
+  const [selectedExercise, setSelectedExercise] = useState('Supino Reto');
   const [loadFormData, setLoadFormData] = useState({ exercise: 'Supino Reto', load: '', week: 'Semana Atual' });
 
   // Busca segura sem fallback cego para students[0]
@@ -49,14 +50,29 @@ const StudentProfile = () => {
 
   // Filtragem isolada de dados por aluno
   const studentLoads = loadProgression.filter(l => String(l.student_id) === String(student.id));
-  const exerciseLoads = studentLoads.filter(l => (l.exercise || '').toLowerCase() === loadFormData.exercise.toLowerCase());
-  const chartLoads = exerciseLoads.length > 0 ? exerciseLoads : studentLoads;
+
+  // Lista de exercícios únicos deste aluno mais exercícios padrão
+  const availableExercises = Array.from(new Set([
+    'Supino Reto',
+    'Agachamento Livre',
+    'Levantamento Terra',
+    'Desenvolvimento Ombros',
+    'Puxada Alta',
+    ...studentLoads.map(l => l.exercise).filter(Boolean)
+  ]));
+
+  // Gráfico isolado exclusivamente para o exercício selecionado
+  const chartLoads = studentLoads.filter(l => (l.exercise || '').toLowerCase() === selectedExercise.toLowerCase());
+
   const studentEmotions = emotionalHistory
     .filter(e => String(e.student_id) === String(student.id))
     .map(e => ({
       ...e,
       displayDate: e.record_date ? new Date(e.record_date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : (e.date || '')
     }));
+
+  const latestEmotion = studentEmotions.length > 0 ? studentEmotions[studentEmotions.length - 1] : null;
+  const latestEmotionalScore = latestEmotion ? `${latestEmotion.score}/15` : (student.emotionalScore ? `${student.emotionalScore}/15` : 'Sem registros');
 
   const handleAddLoad = async (e) => {
     e.preventDefault();
@@ -66,6 +82,7 @@ const StudentProfile = () => {
       load: parseFloat(loadFormData.load) || 0,
       week: loadFormData.week
     });
+    setSelectedExercise(loadFormData.exercise);
     setIsLoadModalOpen(false);
     setLoadFormData(prev => ({ ...prev, load: '' }));
   };
@@ -183,7 +200,7 @@ const StudentProfile = () => {
                 <div><span>Frequência (Mês)</span> <strong>{student.frequency || 0}%</strong></div>
                 <div><span>Peso Atual</span> <strong>{student.weight || '--'} kg</strong></div>
                 <div><span>Percentual Gordura</span> <strong>{student.body_fat ?? student.bodyFat ?? 0}%</strong></div>
-                <div><span>Humor Atual</span> <strong>{student.emotionalScore || 'N/A'}/15</strong></div>
+                <div><span>Humor Mais Recente</span> <strong>{latestEmotionalScore}</strong></div>
               </div>
             </Card>
           </div>
@@ -191,15 +208,34 @@ const StudentProfile = () => {
 
         {activeTab === 'load' && (
           <div className="tab-pane load-tab">
-            <div className="tab-header flex-between" style={{ marginBottom: '1.5rem' }}>
-              <h3 style={{color: 'var(--text-primary)'}}>Evolução de Cargas - {loadFormData.exercise}</h3>
-              <button className="primary-button" onClick={() => setIsLoadModalOpen(true)}>Nova Carga</button>
+            <div className="tab-header flex-between" style={{ marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 500 }}>Exercício:</span>
+                <select 
+                  className="form-input" 
+                  style={{ width: 'auto', minWidth: '200px' }}
+                  value={selectedExercise}
+                  onChange={(e) => setSelectedExercise(e.target.value)}
+                >
+                  {availableExercises.map(ex => (
+                    <option key={ex} value={ex}>{ex}</option>
+                  ))}
+                </select>
+              </div>
+
+              <button className="primary-button" onClick={() => {
+                setLoadFormData(prev => ({ ...prev, exercise: selectedExercise }));
+                setIsLoadModalOpen(true);
+              }}>
+                <Plus size={18} /> Nova Carga
+              </button>
             </div>
-            <Card title={`Evolução: ${loadFormData.exercise}`} className="chart-card">
+
+            <Card title={`Evolução de Carga: ${selectedExercise}`} className="chart-card">
               <div className="chart-container">
                 {chartLoads.length === 0 ? (
                   <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
-                    Nenhuma carga registrada para este exercício.
+                    Nenhuma carga registrada para {selectedExercise}.
                   </div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">

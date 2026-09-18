@@ -26,6 +26,22 @@ const Dashboard = () => {
     return e.event_date ? new Date(e.event_date).getTime() >= nowTimestamp : false;
   }).length;
 
+  // Formatação segura de datas para o gráfico geral de humor
+  const formattedEmotions = emotionalHistory.map(e => {
+    const rawDate = e.record_date || e.date || '';
+    let displayDate = rawDate;
+    if (rawDate && rawDate.includes('-')) {
+      const parts = rawDate.split('T')[0].split('-');
+      if (parts.length === 3) {
+        displayDate = `${parts[2]}/${parts[1]}`;
+      }
+    }
+    return {
+      ...e,
+      displayDate
+    };
+  });
+
   return (
     <div className="dashboard-page fade-in-up">
       <header className="dashboard-header">
@@ -71,15 +87,15 @@ const Dashboard = () => {
         <div className="main-column">
           <Card title="Acompanhamento Emocional Geral (Média)" className="chart-card">
             <div style={{ height: '300px', width: '100%', marginTop: '1rem' }}>
-              {emotionalHistory.length === 0 ? (
+              {formattedEmotions.length === 0 ? (
                 <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
                   Nenhum registro emocional registrado ainda.
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={emotionalHistory}>
+                  <LineChart data={formattedEmotions}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                    <XAxis dataKey="date" stroke="var(--text-secondary)" axisLine={false} tickLine={false} dy={10} />
+                    <XAxis dataKey="displayDate" stroke="var(--text-secondary)" axisLine={false} tickLine={false} dy={10} />
                     <YAxis domain={[0, 15]} stroke="var(--text-secondary)" axisLine={false} tickLine={false} dx={-10} />
                     <Tooltip 
                       contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', borderRadius: '8px', color: 'white' }}

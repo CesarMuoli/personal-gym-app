@@ -29,22 +29,29 @@ export const AppProvider = ({ children }) => {
   }, []);
 
   const fetchData = useCallback(async () => {
-    if (!session) return;
+    if (!session?.user?.id) return;
     setLoading(true);
     try {
       const [studentsRes, eventsRes, loadRes, emotionalRes, goalsRes] = await Promise.all([
         supabase.from('students').select('*').order('created_at', { ascending: false }),
-        supabase.from('calendar_events').select('*'),
-        supabase.from('load_progression').select('*'),
-        supabase.from('emotional_history').select('*'),
-        supabase.from('financial_goals').select('*').eq('id', 1).maybeSingle()
+        supabase.from('calendar_events').select('*').order('event_date', { ascending: true }),
+        supabase.from('load_progression').select('*').order('created_at', { ascending: true }),
+        supabase.from('emotional_history').select('*').order('record_date', { ascending: true }),
+        supabase.from('financial_goals').select('*').eq('user_id', session.user.id).maybeSingle()
       ]);
 
       if (studentsRes.data) setStudents(studentsRes.data);
       if (eventsRes.data) setCalendarEvents(eventsRes.data);
       if (loadRes.data) setLoadProgression(loadRes.data);
       if (emotionalRes.data) setEmotionalHistory(emotionalRes.data);
-      if (goalsRes.data) setFinancialGoals(goalsRes.data);
+      
+      if (goalsRes.data) {
+        setFinancialGoals(goalsRes.data);
+      } else {
+        // Fallback para usuário que ainda não tem registro específico
+        const { data: legacyGoal } = await supabase.from('financial_goals').select('*').eq('id', 1).maybeSingle();
+        if (legacyGoal) setFinancialGoals(legacyGoal);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Erro ao conectar com o banco de dados.');
@@ -70,6 +77,10 @@ export const AppProvider = ({ children }) => {
     return await supabase.auth.signInWithPassword({ email, password });
   };
 
+  const signUp = async (email, password) => {
+    return await supabase.auth.signUp({ email, password });
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
   };
@@ -90,6 +101,40 @@ export const AppProvider = ({ children }) => {
     return data[0];
   };
 
+  const updateStudent = async (studentId, studentData) => {
+    const { data, error } = await supabase
+      .from('students')
+      .update(studentData)
+      .eq('id', studentId)
+      .select();
+    if (error) {
+      console.error('Erro ao atualizar aluno:', error);
+      toast.error('Erro ao atualizar dados do aluno.');
+      return null;
+    }
+    setStudents(prev => prev.map(s => s.id === studentId ? { ...s, ...data[0] } : s));
+    toast.success('Aluno atualizado com sucesso!');
+    return data[0];
+  };
+
+  const deleteStudent = async (studentId) => {
+    const { error } = await supabase
+      .from('students')
+      .delete()
+      .eq('id', studentId);
+    if (error) {
+      console.error('Erro ao excluir aluno:', error);
+      toast.error('Erro ao excluir aluno.');
+      return false;
+    }
+    setStudents(prev => prev.filter(s => s.id !== studentId));
+    setCalendarEvents(prev => prev.filter(e => e.student_id !== studentId));
+    setLoadProgression(prev => prev.filter(l => l.student_id !== studentId));
+    setEmotionalHistory(prev => prev.filter(e => e.student_id !== studentId));
+    toast.success('Aluno removido com sucesso!');
+    return true;
+  };
+
   const addEvent = async (eventData) => {
     const payload = {
       ...eventData,
@@ -104,6 +149,21 @@ export const AppProvider = ({ children }) => {
     setCalendarEvents(prev => [...prev, data[0]]);
     toast.success('Evento agendado!');
     return data[0];
+  };
+
+  const deleteEvent = async (eventId) => {
+    const { error } = await supabase
+      .from('calendar_events')
+      .delete()
+      .eq('id', eventId);
+    if (error) {
+      console.error('Erro ao excluir evento:', error);
+      toast.error('Erro ao cancelar agendamento.');
+      return false;
+    }
+    setCalendarEvents(prev => prev.filter(e => e.id !== eventId));
+    toast.success('Agendamento cancelado com sucesso!');
+    return true;
   };
 
   const addLoad = async (loadData) => {
@@ -142,11 +202,12 @@ export const AppProvider = ({ children }) => {
   };
 
   const uploadEvaluationPhoto = async (studentId, type, file) => {
-    // Sanitização e validação de nome de arquivo
+    // Sanitização e isolamento seguro por pasta de usuário
+    const userId = session?.user?.id || 'public';
     const rawExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
     const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
     const fileExt = allowedExtensions.includes(rawExt) ? rawExt : 'jpg';
-    const cleanFileName = `${studentId}_${type}_${Date.now()}.${fileExt}`;
+    const cleanFileName = `${userId}/${studentId}_${type}_${Date.now()}.${fileExt}`;
     
     const { error: uploadError } = await supabase.storage
       .from('evaluations')
@@ -157,15 +218,23 @@ export const AppProvider = ({ children }) => {
 
     if (uploadError) {
       console.error('Upload error:', uploadError);
-      toast.error('Erro ao fazer upload da imagem.');
-      return null;
+      // Fallback sem pasta se o bucket legado não tiver pastas
+      const fallbackName = `${studentId}_${type}_${Date.now()}.${fileExt}`;
+      const { error: fallbackError } = await supabase.storage
+        .from('evaluations')
+        .upload(fallbackName, file, { cacheControl: '3600', upsert: true });
+
+      if (fallbackError) {
+        toast.error('Erro ao fazer upload da imagem.');
+        return null;
+      }
     }
 
-    // Suporta tanto URLs assinadas quanto públicas
+    // Gerar URL de acesso autenticado
     let photoUrl = '';
     const { data: signedData } = await supabase.storage
       .from('evaluations')
-      .createSignedUrl(cleanFileName, 60 * 60 * 24 * 365); // 1 ano para visualização autenticada
+      .createSignedUrl(cleanFileName, 60 * 60 * 24 * 365);
 
     if (signedData?.signedUrl) {
       photoUrl = signedData.signedUrl;
@@ -194,7 +263,6 @@ export const AppProvider = ({ children }) => {
   };
 
   const updateStudentFinance = async (studentId, financeData) => {
-    // Atualização otimista imediata no estado local
     setStudents(prev => prev.map(s => s.id === studentId ? { ...s, ...financeData } : s));
 
     const { error } = await supabase
@@ -205,7 +273,7 @@ export const AppProvider = ({ children }) => {
     if (error) {
       console.error('Update finance error:', error);
       toast.error('Erro ao atualizar financeiro.');
-      fetchData(); // Rollback do estado
+      fetchData();
       return false;
     }
     toast.success('Financeiro atualizado com sucesso!');
@@ -214,20 +282,27 @@ export const AppProvider = ({ children }) => {
   };
 
   const updateFinancialGoals = async (goalsData) => {
-    // Atualização otimista
     setFinancialGoals(prev => ({ ...prev, ...goalsData }));
 
-    // Usar upsert para criar o id 1 caso não exista
     const payload = {
-      id: 1,
-      ...goalsData,
-      user_id: session?.user?.id
+      monthly_goal: Number(goalsData.monthly_goal) || 0,
+      quarterly_goal: Number(goalsData.quarterly_goal) || 0,
+      user_id: session?.user?.id,
+      updated_at: new Date().toISOString()
     };
 
-    const { error } = await supabase
+    // Tentar upsert com conflito em user_id (multi-tenant)
+    let { error } = await supabase
       .from('financial_goals')
-      .upsert(payload);
+      .upsert(payload, { onConflict: 'user_id' });
       
+    if (error) {
+      // Fallback para schemas legados onde id=1 é a PK
+      const legacyPayload = { id: 1, ...payload };
+      const res = await supabase.from('financial_goals').upsert(legacyPayload);
+      error = res.error;
+    }
+
     if (error) {
       console.error('Update goals error:', error);
       toast.error('Erro ao atualizar metas.');
@@ -241,9 +316,13 @@ export const AppProvider = ({ children }) => {
 
   return (
     <AppContext.Provider value={{
-      session, authLoading, signIn, signOut,
+      session, authLoading, signIn, signUp, signOut,
       students, calendarEvents, loadProgression, emotionalHistory, financialGoals, loading,
-      addStudent, addEvent, addLoad, addEmotionalScore, uploadEvaluationPhoto, updateStudentFinance, updateFinancialGoals, refreshData: fetchData
+      addStudent, updateStudent, deleteStudent,
+      addEvent, deleteEvent,
+      addLoad, addEmotionalScore,
+      uploadEvaluationPhoto, updateStudentFinance, updateFinancialGoals,
+      refreshData: fetchData
     }}>
       {children}
     </AppContext.Provider>

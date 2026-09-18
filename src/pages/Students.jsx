@@ -13,21 +13,26 @@ import {
   Clock, 
   TrendingUp, 
   Check, 
-  X,
-  RotateCcw
+  X, 
+  RotateCcw,
+  Edit2,
+  Trash2
 } from 'lucide-react';
 import './Students.css';
 
 const Students = () => {
   const navigate = useNavigate();
-  const { students, addStudent, loading } = useAppContext();
+  const { students, addStudent, updateStudent, deleteStudent, emotionalHistory, loading } = useAppContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingStudent, setEditingStudent] = useState(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [sortOrder, setSortOrder] = useState('az'); // Padrão: A-Z
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'active', 'inactive'
 
-  const [formData, setFormData] = useState({ name: '', plan: '', weight: '', bodyFat: '' });
+  const [formData, setFormData] = useState({ name: '', plan: '', weight: '', bodyFat: '', monthly_fee: '', due_date: 10 });
+  const [editFormData, setEditFormData] = useState({ name: '', plan: '', weight: '', body_fat: '', monthly_fee: '', due_date: 10, active: true });
 
   // Filtragem e Ordenação dos Alunos
   const filteredStudents = students
@@ -62,12 +67,50 @@ const Students = () => {
       plan: formData.plan,
       weight: parseFloat(formData.weight) || 0,
       body_fat: parseFloat(formData.bodyFat) || 0,
+      monthly_fee: parseFloat(formData.monthly_fee) || 0,
+      due_date: parseInt(formData.due_date, 10) || 10,
       active: true,
       frequency: 0,
       avatar: `https://i.pravatar.cc/150?u=${encodeURIComponent(formData.name.trim())}`
     });
     setIsModalOpen(false);
-    setFormData({ name: '', plan: '', weight: '', bodyFat: '' });
+    setFormData({ name: '', plan: '', weight: '', bodyFat: '', monthly_fee: '', due_date: 10 });
+  };
+
+  const handleOpenEdit = (student) => {
+    setEditingStudent(student);
+    setEditFormData({
+      name: student.name || '',
+      plan: student.plan || '',
+      weight: student.weight || '',
+      body_fat: student.body_fat ?? student.bodyFat ?? '',
+      monthly_fee: student.monthly_fee || '',
+      due_date: student.due_date || 10,
+      active: student.active !== false
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEdit = async (e) => {
+    e.preventDefault();
+    if (!editingStudent) return;
+    await updateStudent(editingStudent.id, {
+      name: editFormData.name,
+      plan: editFormData.plan,
+      weight: parseFloat(editFormData.weight) || 0,
+      body_fat: parseFloat(editFormData.body_fat) || 0,
+      monthly_fee: parseFloat(editFormData.monthly_fee) || 0,
+      due_date: parseInt(editFormData.due_date, 10) || 10,
+      active: editFormData.active
+    });
+    setIsEditModalOpen(false);
+    setEditingStudent(null);
+  };
+
+  const handleDeleteStudent = async (student) => {
+    if (window.confirm(`Tem certeza que deseja excluir o aluno "${student.name}"?\nEsta ação removerá todos os dados e histórico associados.`)) {
+      await deleteStudent(student.id);
+    }
   };
 
   const getSortLabel = () => {
@@ -215,49 +258,71 @@ const Students = () => {
             Nenhum aluno encontrado para os filtros selecionados.
           </div>
         ) : (
-          filteredStudents.map(student => (
-            <Card key={student.id} className="student-card">
-              <div className="student-card-header flex-between">
-                <div className="student-avatar-wrapper">
-                  <img src={student.avatar || `https://i.pravatar.cc/150?u=${student.id}`} alt={student.name} className="student-avatar" />
-                  <span className={`status-indicator ${student.active ? 'active' : 'inactive'}`}></span>
-                </div>
-                <button className="icon-btn-transparent"><MoreVertical size={18} /></button>
-              </div>
-              
-              <div className="student-card-body">
-                <h3 className="student-name">{student.name}</h3>
-                <p className="student-plan">{student.plan || 'Sem plano'}</p>
-                
-                <div className="student-stats">
-                  <div className="stat">
-                    <span className="stat-label">Frequência</span>
-                    <span className="stat-value">{student.frequency || 0}%</span>
-                  </div>
-                  <div className="stat">
-                    <span className="stat-label">Última Aula</span>
-                    <span className="stat-value">{student.last_class ? new Date(student.last_class).toLocaleDateString('pt-BR') : 'N/A'}</span>
-                  </div>
-                </div>
-              </div>
+          filteredStudents.map(student => {
+            const studentEmotions = emotionalHistory.filter(e => String(e.student_id) === String(student.id));
+            const latestScore = studentEmotions.length > 0 ? studentEmotions[studentEmotions.length - 1].score : null;
+            const scoreDisplay = latestScore !== null ? `${latestScore}/15` : (student.emotionalScore ? `${student.emotionalScore}/15` : 'N/A');
 
-              <div className="student-card-footer">
-                <div className="emotional-quick-view">
-                  <Activity size={16} color="var(--accent-color)" />
-                  <span>Humor: {student.emotionalScore || 'N/A'}</span>
+            return (
+              <Card key={student.id} className="student-card">
+                <div className="student-card-header flex-between">
+                  <div className="student-avatar-wrapper">
+                    <img src={student.avatar || `https://i.pravatar.cc/150?u=${student.id}`} alt={student.name} className="student-avatar" />
+                    <span className={`status-indicator ${student.active ? 'active' : 'inactive'}`}></span>
+                  </div>
+                  <div className="card-actions">
+                    <button 
+                      className="student-action-btn edit" 
+                      title="Editar aluno"
+                      onClick={() => handleOpenEdit(student)}
+                    >
+                      <Edit2 size={15} />
+                    </button>
+                    <button 
+                      className="student-action-btn delete" 
+                      title="Excluir aluno"
+                      onClick={() => handleDeleteStudent(student)}
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
                 </div>
-                <button 
-                  className="secondary-button"
-                  onClick={() => navigate(`/student/${student.id}`)}
-                >
-                  Ver Perfil
-                </button>
-              </div>
-            </Card>
-          ))
+                
+                <div className="student-card-body">
+                  <h3 className="student-name">{student.name}</h3>
+                  <p className="student-plan">{student.plan || 'Sem plano'}</p>
+                  
+                  <div className="student-stats">
+                    <div className="stat">
+                      <span className="stat-label">Frequência</span>
+                      <span className="stat-value">{student.frequency || 0}%</span>
+                    </div>
+                    <div className="stat">
+                      <span className="stat-label">Última Aula</span>
+                      <span className="stat-value">{student.last_class ? new Date(student.last_class).toLocaleDateString('pt-BR') : 'N/A'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="student-card-footer">
+                  <div className="emotional-quick-view">
+                    <Activity size={16} color="var(--accent-color)" />
+                    <span>Humor: {scoreDisplay}</span>
+                  </div>
+                  <button 
+                    className="secondary-button"
+                    onClick={() => navigate(`/student/${student.id}`)}
+                  >
+                    Ver Perfil
+                  </button>
+                </div>
+              </Card>
+            );
+          })
         )}
       </div>
 
+      {/* Modal de Cadastro de Novo Aluno */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Cadastrar Novo Aluno">
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -270,6 +335,16 @@ const Students = () => {
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
             <div className="form-group" style={{ flex: 1 }}>
+              <label>Mensalidade (R$)</label>
+              <input type="number" step="0.01" className="form-input" value={formData.monthly_fee} onChange={e => setFormData({...formData, monthly_fee: e.target.value})} placeholder="Ex: 350.00" />
+            </div>
+            <div className="form-group" style={{ flex: 1 }}>
+              <label>Dia Vencimento</label>
+              <input type="number" min="1" max="31" className="form-input" value={formData.due_date} onChange={e => setFormData({...formData, due_date: e.target.value})} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <div className="form-group" style={{ flex: 1 }}>
               <label>Peso Inicial (kg)</label>
               <input type="number" step="0.1" className="form-input" value={formData.weight} onChange={e => setFormData({...formData, weight: e.target.value})} />
             </div>
@@ -279,6 +354,95 @@ const Students = () => {
             </div>
           </div>
           <button type="submit" className="primary-button" style={{ width: '100%', marginTop: '1rem', justifyContent: 'center' }}>Salvar Aluno</button>
+        </form>
+      </Modal>
+
+      {/* Modal de Edição de Aluno */}
+      <Modal isOpen={isEditModalOpen} onClose={() => { setIsEditModalOpen(false); setEditingStudent(null); }} title="Editar Dados do Aluno">
+        <form onSubmit={handleSaveEdit}>
+          <div className="form-group">
+            <label>Nome Completo</label>
+            <input 
+              required 
+              type="text" 
+              className="form-input" 
+              value={editFormData.name} 
+              onChange={e => setEditFormData({...editFormData, name: e.target.value})} 
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Plano</label>
+            <input 
+              type="text" 
+              className="form-input" 
+              value={editFormData.plan} 
+              onChange={e => setEditFormData({...editFormData, plan: e.target.value})} 
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <div className="form-group" style={{ flex: 1 }}>
+              <label>Mensalidade (R$)</label>
+              <input 
+                type="number" 
+                step="0.01" 
+                className="form-input" 
+                value={editFormData.monthly_fee} 
+                onChange={e => setEditFormData({...editFormData, monthly_fee: e.target.value})} 
+              />
+            </div>
+            <div className="form-group" style={{ flex: 1 }}>
+              <label>Dia Vencimento</label>
+              <input 
+                type="number" 
+                min="1" 
+                max="31" 
+                className="form-input" 
+                value={editFormData.due_date} 
+                onChange={e => setEditFormData({...editFormData, due_date: e.target.value})} 
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <div className="form-group" style={{ flex: 1 }}>
+              <label>Peso Atual (kg)</label>
+              <input 
+                type="number" 
+                step="0.1" 
+                className="form-input" 
+                value={editFormData.weight} 
+                onChange={e => setEditFormData({...editFormData, weight: e.target.value})} 
+              />
+            </div>
+            <div className="form-group" style={{ flex: 1 }}>
+              <label>Percentual BF (%)</label>
+              <input 
+                type="number" 
+                step="0.1" 
+                className="form-input" 
+                value={editFormData.body_fat} 
+                onChange={e => setEditFormData({...editFormData, body_fat: e.target.value})} 
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Status da Matrícula</label>
+            <select 
+              className="form-input" 
+              value={editFormData.active ? 'true' : 'false'} 
+              onChange={e => setEditFormData({...editFormData, active: e.target.value === 'true'})}
+            >
+              <option value="true">Ativo (Treinos Ativos)</option>
+              <option value="false">Inativo / Trancado</option>
+            </select>
+          </div>
+
+          <button type="submit" className="primary-button" style={{ width: '100%', marginTop: '1rem', justifyContent: 'center' }}>
+            Salvar Alterações
+          </button>
         </form>
       </Modal>
     </div>

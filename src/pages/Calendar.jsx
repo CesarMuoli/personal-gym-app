@@ -10,7 +10,8 @@ import {
   Plus, 
   CheckCircle2, 
   ListFilter, 
-  Grid
+  Grid,
+  Trash2
 } from 'lucide-react';
 import './Calendar.css';
 
@@ -22,7 +23,7 @@ const MONTH_NAMES = [
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 const Calendar = () => {
-  const { students, calendarEvents, addEvent, loading } = useAppContext();
+  const { students, calendarEvents, addEvent, deleteEvent, loading } = useAppContext();
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -54,7 +55,7 @@ const Calendar = () => {
     setSelectedDate(today);
   };
 
-  // Cálculo da Grade do Mês
+  // Cálculo da Grade do Mês com Normalização Automática de Datas
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
@@ -62,13 +63,14 @@ const Calendar = () => {
   const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
   const prevMonthTotalDays = new Date(year, month, 0).getDate();
 
-  // Dias do mês anterior para preencher a primeira semana
+  // Dias do mês anterior para preencher a primeira semana (usando new Date para evitar overflow)
   const prevMonthDays = [];
   for (let i = firstDayIndex - 1; i >= 0; i--) {
+    const targetDate = new Date(year, month - 1, prevMonthTotalDays - i);
     prevMonthDays.push({
-      day: prevMonthTotalDays - i,
-      month: month - 1,
-      year: month === 0 ? year - 1 : year,
+      day: targetDate.getDate(),
+      month: targetDate.getMonth(),
+      year: targetDate.getFullYear(),
       isCurrentMonth: false
     });
   }
@@ -88,10 +90,11 @@ const Calendar = () => {
   const remainingCells = 42 - (prevMonthDays.length + currentMonthDays.length);
   const nextMonthDays = [];
   for (let n = 1; n <= remainingCells; n++) {
+    const targetDate = new Date(year, month + 1, n);
     nextMonthDays.push({
-      day: n,
-      month: month + 1,
-      year: month === 11 ? year + 1 : year,
+      day: targetDate.getDate(),
+      month: targetDate.getMonth(),
+      year: targetDate.getFullYear(),
       isCurrentMonth: false
     });
   }
@@ -334,6 +337,17 @@ const Calendar = () => {
                     <h4>{event.title}</h4>
                     <span className="event-badge-tag">{getTypeName(event.type)}</span>
                   </div>
+                  <button 
+                    className="event-delete-btn" 
+                    title="Cancelar agendamento"
+                    onClick={() => {
+                      if (window.confirm(`Deseja cancelar o agendamento "${event.title}"?`)) {
+                        deleteEvent(event.id);
+                      }
+                    }}
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               ))}
             </div>
@@ -371,6 +385,18 @@ const Calendar = () => {
                     <strong>{ev.title}</strong>
                     <span>{getTypeName(ev.type)}</span>
                   </div>
+                  <button 
+                    className="event-delete-btn" 
+                    title="Cancelar agendamento"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm(`Deseja cancelar o compromisso "${ev.title}"?`)) {
+                        deleteEvent(ev.id);
+                      }
+                    }}
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               ))
             )}

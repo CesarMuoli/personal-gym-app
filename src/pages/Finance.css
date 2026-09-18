@@ -93,8 +93,24 @@
 
 .status-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.25rem;
+}
+
+.status-col.late {
+  border-top: 2px solid var(--danger);
+}
+
+.status-col.warning {
+  border-top: 2px solid var(--warning);
+}
+
+.status-col.pending {
+  border-top: 2px solid var(--info);
+}
+
+.status-col.paid {
+  border-top: 2px solid var(--success);
 }
 
 .student-list {

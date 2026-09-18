@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import Card from '../components/UI/Card';
 import Modal from '../components/UI/Modal';
-import { DollarSign, TrendingUp, Target, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
+import { DollarSign, TrendingUp, Target, AlertCircle, CheckCircle2, Clock, Calendar as CalendarIcon } from 'lucide-react';
 import './Finance.css';
 
 const Finance = () => {
@@ -23,10 +23,10 @@ const Finance = () => {
   const quarterlyGoalProgress = financialGoals?.quarterly_goal > 0 ? (quarterlyRevenueEstimate / financialGoals.quarterly_goal) * 100 : 0;
 
   // Lógica de Status de Pagamento
-  const currentDate = new Date();
-  const currentMonth = currentDate.getMonth();
-  const currentYear = currentDate.getFullYear();
-  const currentDay = currentDate.getDate();
+  const todayDate = new Date();
+  const currentMonth = todayDate.getMonth();
+  const currentYear = todayDate.getFullYear();
+  const currentDay = todayDate.getDate();
 
   const getPaymentStatus = (student) => {
     if (!student.monthly_fee) return 'unconfigured';
@@ -99,23 +99,28 @@ const Finance = () => {
           <p className="metric-value">{formatCurrency(totalRevenue)}</p>
         </Card>
         
-        <Card className="metric-card glow-card-purple">
+        <Card className="metric-card glow-card">
           <div className="metric-icon ticket-icon"><TrendingUp size={24} /></div>
           <h3>Ticket Médio</h3>
           <p className="metric-value">{formatCurrency(averageTicket)}</p>
-          <p className="metric-sub">por aluno ativo</p>
         </Card>
 
-        <Card className="metric-card progress-card">
-          <h3>Meta Mensal ({formatCurrency(financialGoals?.monthly_goal || 0)})</h3>
+        <Card className="metric-card progress-card glow-card">
+          <div className="flex-between">
+            <h3>Meta Mensal</h3>
+            <span className="goal-target">Alvo: {formatCurrency(financialGoals?.monthly_goal || 0)}</span>
+          </div>
           <div className="progress-bar-bg">
             <div className="progress-bar-fill" style={{ width: `${Math.min(monthlyGoalProgress, 100)}%`, backgroundColor: monthlyGoalProgress >= 100 ? 'var(--success)' : 'var(--accent-color)' }}></div>
           </div>
-          <p className="metric-sub">{monthlyGoalProgress.toFixed(1)}% alcançado</p>
+          <p className="metric-sub">Progresso: {monthlyGoalProgress.toFixed(1)}%</p>
         </Card>
 
-        <Card className="metric-card progress-card">
-          <h3>Meta Trimestral ({formatCurrency(financialGoals?.quarterly_goal || 0)})</h3>
+        <Card className="metric-card progress-card glow-card">
+          <div className="flex-between">
+            <h3>Meta Trimestral</h3>
+            <span className="goal-target">Alvo: {formatCurrency(financialGoals?.quarterly_goal || 0)}</span>
+          </div>
           <div className="progress-bar-bg">
             <div className="progress-bar-fill" style={{ width: `${Math.min(quarterlyGoalProgress, 100)}%`, backgroundColor: quarterlyGoalProgress >= 100 ? 'var(--success)' : 'var(--info)' }}></div>
           </div>
@@ -123,7 +128,7 @@ const Finance = () => {
         </Card>
       </div>
 
-      {/* Controle de Inadimplência */}
+      {/* Controle de Inadimplência e Mensalidades */}
       <h2 className="section-title" style={{ marginTop: '3rem', marginBottom: '1.5rem' }}>Status de Mensalidades (Mês Atual)</h2>
       <div className="status-grid">
         
@@ -133,10 +138,10 @@ const Finance = () => {
             <ul className="student-list">
               {statusGroups.late.map(s => (
                 <li key={s.id} className="student-item">
-                  <img src={s.avatar} alt={s.name} />
+                  <img src={s.avatar || `https://i.pravatar.cc/150?u=${s.id}`} alt={s.name} />
                   <div className="student-info">
                     <strong>{s.name}</strong>
-                    <span>Venceu dia {s.due_date} • {formatCurrency(s.monthly_fee)}</span>
+                    <span>Venceu dia {s.due_date || 10} • {formatCurrency(s.monthly_fee)}</span>
                   </div>
                 </li>
               ))}
@@ -150,10 +155,27 @@ const Finance = () => {
             <ul className="student-list">
               {statusGroups.warning.map(s => (
                 <li key={s.id} className="student-item">
-                  <img src={s.avatar} alt={s.name} />
+                  <img src={s.avatar || `https://i.pravatar.cc/150?u=${s.id}`} alt={s.name} />
                   <div className="student-info">
                     <strong>{s.name}</strong>
-                    <span>Vence dia {s.due_date} • {formatCurrency(s.monthly_fee)}</span>
+                    <span>Vence dia {s.due_date || 10} • {formatCurrency(s.monthly_fee)}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        {/* A Vencer / No Prazo */}
+        <Card title={<div style={{display:'flex', alignItems:'center', gap:'0.5rem', color:'var(--info)'}}><CalendarIcon size={20}/> A Vencer (No Prazo)</div>} className="status-col pending">
+          {statusGroups.pending.length === 0 ? <p className="empty-text">Nenhuma mensalidade a vencer.</p> : (
+            <ul className="student-list">
+              {statusGroups.pending.map(s => (
+                <li key={s.id} className="student-item">
+                  <img src={s.avatar || `https://i.pravatar.cc/150?u=${s.id}`} alt={s.name} />
+                  <div className="student-info">
+                    <strong>{s.name}</strong>
+                    <span>Vence dia {s.due_date || 10} • {formatCurrency(s.monthly_fee)}</span>
                   </div>
                 </li>
               ))}
@@ -167,7 +189,7 @@ const Finance = () => {
             <ul className="student-list">
               {statusGroups.paid.map(s => (
                 <li key={s.id} className="student-item">
-                  <img src={s.avatar} alt={s.name} />
+                  <img src={s.avatar || `https://i.pravatar.cc/150?u=${s.id}`} alt={s.name} />
                   <div className="student-info">
                     <strong>{s.name}</strong>
                     <span>{formatCurrency(s.monthly_fee)}</span>

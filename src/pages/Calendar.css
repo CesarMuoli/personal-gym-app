@@ -449,6 +449,26 @@
   font-weight: 600;
 }
 
+.event-delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  margin-left: 0.5rem;
+}
+
+.event-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger);
+  transform: scale(1.1);
+}
+
 .event-badge-tag {
   font-size: 0.75rem;
   padding: 0.2rem 0.5rem;
