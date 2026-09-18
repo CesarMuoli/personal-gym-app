@@ -9,12 +9,29 @@ import Finance from './pages/Finance';
 import Login from './pages/Login';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { Toaster } from 'react-hot-toast';
+import { Dumbbell, ShieldCheck } from 'lucide-react';
 
 const AppContent = () => {
   const { session, authLoading } = useAppContext();
 
   if (authLoading) {
-    return <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center' }}>Carregando sistema...</div>;
+    return (
+      <div className="splash-screen fade-in-up">
+        <div className="splash-card glass-panel">
+          <Dumbbell size={56} className="splash-logo-icon" />
+          <h1 className="logo-text" style={{ fontSize: '2rem', marginTop: '1rem' }}>
+            Personal<span style={{ color: 'var(--accent-color)' }}>GYM</span>
+          </h1>
+          <div className="splash-loader-bar">
+            <div className="splash-loader-fill"></div>
+          </div>
+          <div className="splash-status-badge">
+            <ShieldCheck size={16} color="var(--accent-color)" />
+            <span>Iniciando ambiente seguro...</span>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!session) {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Card from '../components/UI/Card';
 import { useAppContext } from '../context/AppContext';
@@ -13,6 +13,20 @@ const PresentationMode = () => {
 
   const student = students.find(s => String(s.id) === String(id));
 
+  // Filtragem isolada por aluno
+  const studentLoads = loadProgression.filter(l => String(l.student_id) === String(student?.id));
+  const availableExercises = Array.from(new Set(studentLoads.map(l => l.exercise).filter(Boolean)));
+  const defaultExercise = availableExercises.length > 0 ? availableExercises[0] : 'Supino Reto';
+  const [selectedExercise, setSelectedExercise] = useState(defaultExercise);
+
+  useEffect(() => {
+    if (availableExercises.length > 0 && !availableExercises.includes(selectedExercise)) {
+      setSelectedExercise(availableExercises[0]);
+    }
+  }, [loadProgression]);
+
+  const chartLoads = studentLoads.filter(l => (l.exercise || '').toLowerCase() === selectedExercise.toLowerCase());
+
   if (!student) {
     return (
       <div className="presentation-page flex-center" style={{ minHeight: '80vh', flexDirection: 'column', gap: '1rem' }}>
@@ -24,8 +38,6 @@ const PresentationMode = () => {
     );
   }
 
-  // Filtragem isolada por aluno
-  const studentLoads = loadProgression.filter(l => String(l.student_id) === String(student.id));
   const studentEmotions = emotionalHistory
     .filter(e => String(e.student_id) === String(student.id))
     .map(e => ({
@@ -107,15 +119,34 @@ const PresentationMode = () => {
         </div>
 
         <div className="presentation-col">
-          <Card title={`Evolução de Cargas (${studentLoads.length} registros)`} className="presentation-card">
+          <Card 
+            title={
+              <div className="flex-between" style={{ flexWrap: 'wrap', gap: '0.5rem', width: '100%' }}>
+                <span>Evolução de Cargas ({selectedExercise})</span>
+                {availableExercises.length > 1 && (
+                  <select 
+                    className="form-input" 
+                    style={{ padding: '0.25rem 0.6rem', fontSize: '0.8rem', width: 'auto', minWidth: '150px' }}
+                    value={selectedExercise}
+                    onChange={(e) => setSelectedExercise(e.target.value)}
+                  >
+                    {availableExercises.map(ex => (
+                      <option key={ex} value={ex}>{ex}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            } 
+            className="presentation-card"
+          >
             <div style={{ height: '220px', width: '100%' }}>
-              {studentLoads.length === 0 ? (
+              {chartLoads.length === 0 ? (
                 <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
-                  Nenhum registro de carga ainda.
+                  Nenhum registro de carga para {selectedExercise}.
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={studentLoads}>
+                  <BarChart data={chartLoads}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                     <XAxis dataKey="week" stroke="var(--text-secondary)" />
                     <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'white' }} cursor={{fill: 'rgba(255,255,255,0.05)'}} />

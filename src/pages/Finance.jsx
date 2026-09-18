@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import Card from '../components/UI/Card';
 import Modal from '../components/UI/Modal';
-import { DollarSign, TrendingUp, Target, AlertCircle, CheckCircle2, Clock, Calendar as CalendarIcon } from 'lucide-react';
+import { DollarSign, TrendingUp, Target, AlertCircle, CheckCircle2, Clock, Calendar as CalendarIcon, Check } from 'lucide-react';
 import './Finance.css';
 
 const Finance = () => {
-  const { students, financialGoals, updateFinancialGoals } = useAppContext();
+  const { students, financialGoals, updateFinancialGoals, updateStudentFinance } = useAppContext();
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [goalsForm, setGoalsForm] = useState({
     monthly_goal: financialGoals?.monthly_goal || 0,
@@ -63,6 +63,13 @@ const Finance = () => {
     pending: activeStudents.filter(s => getPaymentStatus(s) === 'pending' || getPaymentStatus(s) === 'unconfigured')
   };
 
+  const handleQuickPay = async (student) => {
+    const today = new Date().toISOString().split('T')[0];
+    await updateStudentFinance(student.id, {
+      last_payment_date: today
+    });
+  };
+
   const handleSaveGoals = async (e) => {
     e.preventDefault();
     await updateFinancialGoals({
@@ -98,7 +105,7 @@ const Finance = () => {
           <h3>Faturamento Mensal</h3>
           <p className="metric-value">{formatCurrency(totalRevenue)}</p>
         </Card>
-        
+
         <Card className="metric-card glow-card">
           <div className="metric-icon ticket-icon"><TrendingUp size={24} /></div>
           <h3>Ticket Médio</h3>
@@ -137,12 +144,22 @@ const Finance = () => {
           {statusGroups.late.length === 0 ? <p className="empty-text">Nenhum aluno atrasado!</p> : (
             <ul className="student-list">
               {statusGroups.late.map(s => (
-                <li key={s.id} className="student-item">
-                  <img src={s.avatar || `https://i.pravatar.cc/150?u=${s.id}`} alt={s.name} />
-                  <div className="student-info">
-                    <strong>{s.name}</strong>
-                    <span>Venceu dia {s.due_date || 10} • {formatCurrency(s.monthly_fee)}</span>
+                <li key={s.id} className="student-item flex-between">
+                  <div className="student-item-left">
+                    <img src={s.avatar || `https://i.pravatar.cc/150?u=${s.id}`} alt={s.name} />
+                    <div className="student-info">
+                      <strong>{s.name}</strong>
+                      <span>Venceu dia {s.due_date || 10} • {formatCurrency(s.monthly_fee)}</span>
+                    </div>
                   </div>
+                  <button 
+                    className="quick-pay-btn" 
+                    title="Dar baixa no pagamento deste mês"
+                    onClick={() => handleQuickPay(s)}
+                  >
+                    <Check size={14} />
+                    <span>Baixa</span>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -154,12 +171,22 @@ const Finance = () => {
           {statusGroups.warning.length === 0 ? <p className="empty-text">Nenhum vencimento próximo.</p> : (
             <ul className="student-list">
               {statusGroups.warning.map(s => (
-                <li key={s.id} className="student-item">
-                  <img src={s.avatar || `https://i.pravatar.cc/150?u=${s.id}`} alt={s.name} />
-                  <div className="student-info">
-                    <strong>{s.name}</strong>
-                    <span>Vence dia {s.due_date || 10} • {formatCurrency(s.monthly_fee)}</span>
+                <li key={s.id} className="student-item flex-between">
+                  <div className="student-item-left">
+                    <img src={s.avatar || `https://i.pravatar.cc/150?u=${s.id}`} alt={s.name} />
+                    <div className="student-info">
+                      <strong>{s.name}</strong>
+                      <span>Vence dia {s.due_date || 10} • {formatCurrency(s.monthly_fee)}</span>
+                    </div>
                   </div>
+                  <button 
+                    className="quick-pay-btn" 
+                    title="Dar baixa no pagamento deste mês"
+                    onClick={() => handleQuickPay(s)}
+                  >
+                    <Check size={14} />
+                    <span>Baixa</span>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -171,12 +198,22 @@ const Finance = () => {
           {statusGroups.pending.length === 0 ? <p className="empty-text">Nenhuma mensalidade a vencer.</p> : (
             <ul className="student-list">
               {statusGroups.pending.map(s => (
-                <li key={s.id} className="student-item">
-                  <img src={s.avatar || `https://i.pravatar.cc/150?u=${s.id}`} alt={s.name} />
-                  <div className="student-info">
-                    <strong>{s.name}</strong>
-                    <span>Vence dia {s.due_date || 10} • {formatCurrency(s.monthly_fee)}</span>
+                <li key={s.id} className="student-item flex-between">
+                  <div className="student-item-left">
+                    <img src={s.avatar || `https://i.pravatar.cc/150?u=${s.id}`} alt={s.name} />
+                    <div className="student-info">
+                      <strong>{s.name}</strong>
+                      <span>Vence dia {s.due_date || 10} • {formatCurrency(s.monthly_fee)}</span>
+                    </div>
                   </div>
+                  <button 
+                    className="quick-pay-btn" 
+                    title="Dar baixa antecipada no pagamento"
+                    onClick={() => handleQuickPay(s)}
+                  >
+                    <Check size={14} />
+                    <span>Baixa</span>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -188,12 +225,17 @@ const Finance = () => {
           {statusGroups.paid.length === 0 ? <p className="empty-text">Nenhum pagamento registrado neste mês.</p> : (
             <ul className="student-list">
               {statusGroups.paid.map(s => (
-                <li key={s.id} className="student-item">
-                  <img src={s.avatar || `https://i.pravatar.cc/150?u=${s.id}`} alt={s.name} />
-                  <div className="student-info">
-                    <strong>{s.name}</strong>
-                    <span>{formatCurrency(s.monthly_fee)}</span>
+                <li key={s.id} className="student-item flex-between">
+                  <div className="student-item-left">
+                    <img src={s.avatar || `https://i.pravatar.cc/150?u=${s.id}`} alt={s.name} />
+                    <div className="student-info">
+                      <strong>{s.name}</strong>
+                      <span>{formatCurrency(s.monthly_fee)}</span>
+                    </div>
                   </div>
+                  <span className="paid-tag-status">
+                    <CheckCircle2 size={14} /> Pago
+                  </span>
                 </li>
               ))}
             </ul>
