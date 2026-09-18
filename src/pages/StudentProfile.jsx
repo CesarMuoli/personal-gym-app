@@ -73,7 +73,7 @@ const StudentProfile = () => {
     }));
 
   const latestEmotion = studentEmotions.length > 0 ? studentEmotions[studentEmotions.length - 1] : null;
-  const latestEmotionalScore = latestEmotion ? `${latestEmotion.score}/15` : (student.emotionalScore ? `${student.emotionalScore}/15` : 'Sem registros');
+  const latestEmotionalScore = latestEmotion ? `${latestEmotion.score}/10` : (student.emotionalScore ? `${student.emotionalScore}/10` : 'Sem registros');
 
   const handleAddLoad = async (e) => {
     e.preventDefault();
@@ -275,7 +275,7 @@ const StudentProfile = () => {
                       <LineChart data={studentEmotions}>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                         <XAxis dataKey="displayDate" stroke="var(--text-secondary)" />
-                        <YAxis domain={[0, 15]} stroke="var(--text-secondary)" />
+                        <YAxis domain={[0, 10]} ticks={[0, 2, 4, 6, 8, 10]} stroke="var(--text-secondary)" />
                         <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'white' }} />
                         <Line type="monotone" dataKey="score" stroke="var(--info)" strokeWidth={3} dot={{ r: 4, fill: 'var(--bg-card)', stroke: 'var(--info)', strokeWidth: 2 }} />
                       </LineChart>

@@ -261,7 +261,7 @@ const Students = () => {
           filteredStudents.map(student => {
             const studentEmotions = emotionalHistory.filter(e => String(e.student_id) === String(student.id));
             const latestScore = studentEmotions.length > 0 ? studentEmotions[studentEmotions.length - 1].score : null;
-            const scoreDisplay = latestScore !== null ? `${latestScore}/15` : (student.emotionalScore ? `${student.emotionalScore}/15` : 'N/A');
+            const scoreDisplay = latestScore !== null ? `${latestScore}/10` : (student.emotionalScore ? `${student.emotionalScore}/10` : 'N/A');
 
             return (
               <Card key={student.id} className="student-card">

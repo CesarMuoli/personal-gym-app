@@ -157,7 +157,7 @@ const PresentationMode = () => {
             </div>
           </Card>
 
-          <Card title={`Humor & Disposição Pós-Treino (Média: ${averageEmotional}/15)`} className="presentation-card">
+          <Card title={`Humor & Disposição Pós-Treino (Média: ${averageEmotional}/10)`} className="presentation-card">
             <div style={{ height: '220px', width: '100%' }}>
               {studentEmotions.length === 0 ? (
                 <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
@@ -168,7 +168,7 @@ const PresentationMode = () => {
                   <LineChart data={studentEmotions}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                     <XAxis dataKey="displayDate" stroke="var(--text-secondary)" />
-                    <YAxis domain={[0, 15]} stroke="var(--text-secondary)" hide />
+                    <YAxis domain={[0, 10]} ticks={[0, 2, 4, 6, 8, 10]} stroke="var(--text-secondary)" hide />
                     <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'white' }} />
                     <Line type="monotone" dataKey="score" stroke="var(--info)" strokeWidth={4} dot={{ r: 5, fill: 'var(--bg-card)', stroke: 'var(--info)', strokeWidth: 2 }} />
                   </LineChart>

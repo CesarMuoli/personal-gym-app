@@ -96,7 +96,7 @@ const Dashboard = () => {
                   <LineChart data={formattedEmotions}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                     <XAxis dataKey="displayDate" stroke="var(--text-secondary)" axisLine={false} tickLine={false} dy={10} />
-                    <YAxis domain={[0, 15]} stroke="var(--text-secondary)" axisLine={false} tickLine={false} dx={-10} />
+                    <YAxis domain={[0, 10]} ticks={[0, 2, 4, 6, 8, 10]} stroke="var(--text-secondary)" axisLine={false} tickLine={false} dx={-10} />
                     <Tooltip 
                       contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', borderRadius: '8px', color: 'white' }}
                     />
