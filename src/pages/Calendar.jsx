@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Card from '../components/UI/Card';
 import Modal from '../components/UI/Modal';
 import { useAppContext } from '../context/AppContext';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, User } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock } from 'lucide-react';
 import './Calendar.css';
 
 const Calendar = () => {

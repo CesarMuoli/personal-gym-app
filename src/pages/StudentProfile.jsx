@@ -3,62 +3,130 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Card from '../components/UI/Card';
 import EmotionalScale from '../components/UI/EmotionalScale';
 import Modal from '../components/UI/Modal';
+import toast from 'react-hot-toast';
 import { useAppContext } from '../context/AppContext';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { User, Activity, Dumbbell, Ruler, ArrowLeft, Presentation, TrendingUp } from 'lucide-react';
+import { User, Activity, Dumbbell, Ruler, ArrowLeft, TrendingUp, DollarSign } from 'lucide-react';
 import './StudentProfile.css';
 
 const StudentProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { students, loadProgression, emotionalHistory, addLoad, addEmotionalScore, uploadEvaluationPhoto } = useAppContext();
+  const { students, loadProgression, emotionalHistory, addLoad, addEmotionalScore, uploadEvaluationPhoto, updateStudentFinance } = useAppContext();
   
   const [activeTab, setActiveTab] = useState('overview');
   const [emotionalScore, setEmotionalScore] = useState(null);
   const [isLoadModalOpen, setIsLoadModalOpen] = useState(false);
   const [loadFormData, setLoadFormData] = useState({ exercise: 'Supino Reto', load: '', week: 'Semana Atual' });
 
-  const student = students.find(s => s.id === parseInt(id)) || students[0];
+  // Busca segura sem fallback cego para students[0]
+  const student = students.find(s => String(s.id) === String(id));
+
+  const [financeForm, setFinanceForm] = useState({
+    monthly_fee: student?.monthly_fee || 0,
+    due_date: student?.due_date || 10
+  });
+  const [prevStudentId, setPrevStudentId] = useState(student?.id);
+
+  if (student && student.id !== prevStudentId) {
+    setPrevStudentId(student.id);
+    setFinanceForm({
+      monthly_fee: student.monthly_fee || 0,
+      due_date: student.due_date || 10
+    });
+  }
+
+  if (!student) {
+    return (
+      <div className="profile-page flex-center" style={{ minHeight: '80vh', flexDirection: 'column', gap: '1rem' }}>
+        <h2 style={{ color: 'var(--text-secondary)' }}>Aluno não encontrado</h2>
+        <button className="primary-button" onClick={() => navigate('/students')}>
+          <ArrowLeft size={18} /> Voltar para Alunos
+        </button>
+      </div>
+    );
+  }
+
+  // Filtragem isolada de dados por aluno
+  const studentLoads = loadProgression.filter(l => String(l.student_id) === String(student.id));
+  const exerciseLoads = studentLoads.filter(l => (l.exercise || '').toLowerCase() === loadFormData.exercise.toLowerCase());
+  const chartLoads = exerciseLoads.length > 0 ? exerciseLoads : studentLoads;
+  const studentEmotions = emotionalHistory.filter(e => String(e.student_id) === String(student.id));
 
   const handleAddLoad = async (e) => {
     e.preventDefault();
     await addLoad({
-      student_id: parseInt(id),
+      student_id: student.id,
       exercise: loadFormData.exercise,
-      load: parseFloat(loadFormData.load),
+      load: parseFloat(loadFormData.load) || 0,
       week: loadFormData.week
     });
     setIsLoadModalOpen(false);
-    setLoadFormData({ exercise: 'Supino Reto', load: '', week: 'Semana Atual' });
+    setLoadFormData(prev => ({ ...prev, load: '' }));
   };
 
   const handleSaveEmotional = async () => {
     if (emotionalScore === null) return;
     await addEmotionalScore({
-      student_id: parseInt(id),
+      student_id: student.id,
       score: emotionalScore,
       date: new Date().toISOString().split('T')[0]
     });
     setEmotionalScore(null);
   };
 
+  // Upload com validação de segurança (MIME e tamanho máximo de 5MB)
   const handlePhotoUpload = async (e, type) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
     
-    // Mostra um loading rápido
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Formato inválido. Use apenas fotos JPG, PNG ou WEBP.');
+      return;
+    }
+
+    const maxBytes = 5 * 1024 * 1024; // 5 MB
+    if (file.size > maxBytes) {
+      toast.error('Arquivo muito pesado. O limite máximo é de 5MB.');
+      return;
+    }
+    
     toast.loading(`Enviando foto de ${type === 'before' ? 'Antes' : 'Depois'}...`, { id: 'upload' });
     const url = await uploadEvaluationPhoto(student.id, type, file);
     if (url) {
-      toast.success('Concluído!', { id: 'upload' });
+      toast.success('Foto enviada com sucesso!', { id: 'upload' });
     } else {
       toast.dismiss('upload');
     }
   };
 
-  if (!student) {
-    return <div className="profile-page"><div className="profile-content">Aluno não encontrado</div></div>;
-  }
+  const handleUpdateFinance = async (e) => {
+    e.preventDefault();
+    await updateStudentFinance(student.id, {
+      monthly_fee: Number(financeForm.monthly_fee) || 0,
+      due_date: Math.min(Math.max(Number(financeForm.due_date) || 10, 1), 31)
+    });
+  };
+
+  const handleMarkAsPaid = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    await updateStudentFinance(student.id, {
+      last_payment_date: today
+    });
+  };
+
+  const formatPaymentDate = (dateStr) => {
+    if (!dateStr) return 'Nunca pago';
+    try {
+      const cleanDate = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+      const [year, month, day] = cleanDate.split('-');
+      if (!year || !month || !day) return dateStr;
+      return `${day}/${month}/${year}`;
+    } catch {
+      return dateStr;
+    }
+  };
 
   return (
     <div className="profile-page fade-in-up">
@@ -66,10 +134,10 @@ const StudentProfile = () => {
         <button className="icon-btn-transparent" onClick={() => navigate('/students')}><ArrowLeft size={18} /> Voltar para Alunos</button>
         <div className="profile-info flex-between">
           <div className="profile-user">
-            <img src={student.avatar} alt={student.name} className="profile-avatar" />
+            <img src={student.avatar || `https://i.pravatar.cc/150?u=${student.id}`} alt={student.name} className="profile-avatar" />
             <div>
               <h1 className="title" style={{ marginBottom: '0.25rem' }}>{student.name}</h1>
-              <p className="subtitle">{student.plan} • {student.active ? 'Ativo' : 'Inativo'}</p>
+              <p className="subtitle">{student.plan || 'Sem plano cadastrado'} • {student.active ? 'Ativo' : 'Inativo'}</p>
             </div>
           </div>
           <div className="profile-actions">
@@ -93,6 +161,9 @@ const StudentProfile = () => {
           <button className={`tab-btn ${activeTab === 'physical' ? 'active' : ''}`} onClick={() => setActiveTab('physical')}>
             <Ruler size={18} /> Avaliação Física
           </button>
+          <button className={`tab-btn ${activeTab === 'finance' ? 'active' : ''}`} onClick={() => setActiveTab('finance')}>
+            <DollarSign size={18} /> Financeiro
+          </button>
         </nav>
       </header>
 
@@ -101,10 +172,10 @@ const StudentProfile = () => {
           <div className="tab-pane overview-tab">
             <Card title="Estatísticas Rápidas" className="stats-card">
               <div className="quick-stats">
-                <div><span>Frequência (Mês)</span> <strong>{student.frequency}%</strong></div>
-                <div><span>Peso Atual</span> <strong>{student.weight} kg</strong></div>
-                <div><span>Percentual Gordura</span> <strong>{student.bodyFat}%</strong></div>
-                <div><span>Humor Atual</span> <strong>{student.emotionalScore}/15</strong></div>
+                <div><span>Frequência (Mês)</span> <strong>{student.frequency || 0}%</strong></div>
+                <div><span>Peso Atual</span> <strong>{student.weight || '--'} kg</strong></div>
+                <div><span>Percentual Gordura</span> <strong>{student.body_fat ?? student.bodyFat ?? 0}%</strong></div>
+                <div><span>Humor Atual</span> <strong>{student.emotionalScore || 'N/A'}/15</strong></div>
               </div>
             </Card>
           </div>
@@ -116,17 +187,23 @@ const StudentProfile = () => {
               <h3 style={{color: 'var(--text-primary)'}}>Evolução de Cargas - {loadFormData.exercise}</h3>
               <button className="primary-button" onClick={() => setIsLoadModalOpen(true)}>Nova Carga</button>
             </div>
-            <Card title="Evolução: Supino Reto" className="chart-card">
+            <Card title={`Evolução: ${loadFormData.exercise}`} className="chart-card">
               <div className="chart-container">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={loadProgression}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                    <XAxis dataKey="week" stroke="var(--text-secondary)" />
-                    <YAxis stroke="var(--text-secondary)" />
-                    <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', borderRadius: '8px', color: 'white' }} cursor={{fill: 'rgba(255,255,255,0.05)'}} />
-                    <Bar dataKey="load" fill="var(--accent-color)" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                {chartLoads.length === 0 ? (
+                  <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
+                    Nenhuma carga registrada para este exercício.
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartLoads}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                      <XAxis dataKey="week" stroke="var(--text-secondary)" />
+                      <YAxis stroke="var(--text-secondary)" />
+                      <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', borderRadius: '8px', color: 'white' }} cursor={{fill: 'rgba(255,255,255,0.05)'}} />
+                      <Bar dataKey="load" fill="var(--accent-color)" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </Card>
           </div>
@@ -142,17 +219,23 @@ const StudentProfile = () => {
                 )}
               </Card>
 
-              <Card title="Histórico Emocional (Média)" className="chart-card">
+              <Card title="Histórico Emocional do Aluno" className="chart-card">
                 <div className="chart-container" style={{ height: '250px' }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={emotionalHistory}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                      <XAxis dataKey="date" stroke="var(--text-secondary)" />
-                      <YAxis domain={[0, 15]} stroke="var(--text-secondary)" />
-                      <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'white' }} />
-                      <Line type="monotone" dataKey="score" stroke="var(--info)" strokeWidth={3} dot={{ r: 4, fill: 'var(--bg-card)', stroke: 'var(--info)', strokeWidth: 2 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  {studentEmotions.length === 0 ? (
+                    <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
+                      Nenhum registro de humor salvo para este aluno.
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={studentEmotions}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                        <XAxis dataKey="date" stroke="var(--text-secondary)" />
+                        <YAxis domain={[0, 15]} stroke="var(--text-secondary)" />
+                        <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'white' }} />
+                        <Line type="monotone" dataKey="score" stroke="var(--info)" strokeWidth={3} dot={{ r: 4, fill: 'var(--bg-card)', stroke: 'var(--info)', strokeWidth: 2 }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </Card>
             </div>
@@ -161,7 +244,7 @@ const StudentProfile = () => {
 
         {activeTab === 'physical' && (
           <div className="tab-pane physical-tab">
-            <Card title="Comparativo Visual">
+            <Card title="Comparativo Visual (Avaliação Física)">
               <div className="comparison-view" style={{ display: 'flex', gap: '2rem', justifyContent: 'center', marginTop: '2rem' }}>
                 
                 {/* Foto Antes */}
@@ -184,7 +267,7 @@ const StudentProfile = () => {
                         <span style={{ color: 'var(--text-secondary)' }}>+ Adicionar Foto (Antes)</span>
                       )}
                     </div>
-                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handlePhotoUpload(e, 'before')} />
+                    <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={(e) => handlePhotoUpload(e, 'before')} />
                   </label>
                   <span style={{ fontWeight: 500, color: 'var(--text-secondary)' }}>Início do Plano</span>
                 </div>
@@ -209,12 +292,39 @@ const StudentProfile = () => {
                         <span style={{ color: 'var(--success)' }}>+ Adicionar Foto (Atual)</span>
                       )}
                     </div>
-                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handlePhotoUpload(e, 'after')} />
+                    <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={(e) => handlePhotoUpload(e, 'after')} />
                   </label>
                   <span style={{ fontWeight: 500, color: 'var(--success)' }}>Evolução Atual</span>
                 </div>
 
               </div>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === 'finance' && (
+          <div className="tab-pane finance-tab">
+            <Card title="Configurações de Pagamento">
+              <form onSubmit={handleUpdateFinance}>
+                <div className="form-group">
+                  <label>Valor da Mensalidade (R$)</label>
+                  <input type="number" step="0.01" className="form-input" value={financeForm.monthly_fee} onChange={e => setFinanceForm({...financeForm, monthly_fee: e.target.value})} />
+                </div>
+                <div className="form-group">
+                  <label>Dia do Vencimento</label>
+                  <input type="number" min="1" max="31" className="form-input" value={financeForm.due_date} onChange={e => setFinanceForm({...financeForm, due_date: e.target.value})} />
+                </div>
+                <button type="submit" className="primary-button" style={{ marginTop: '1rem' }}>Atualizar Dados</button>
+              </form>
+            </Card>
+
+            <Card title="Controle do Mês Atual" style={{ marginTop: '1.5rem' }}>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+                Último pagamento registrado: <strong>{formatPaymentDate(student.last_payment_date)}</strong>
+              </p>
+              <button className="primary-button" style={{ backgroundColor: 'var(--success)' }} onClick={handleMarkAsPaid}>
+                Marcar como Pago neste mês
+              </button>
             </Card>
           </div>
         )}

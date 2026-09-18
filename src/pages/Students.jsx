@@ -26,7 +26,7 @@ const Students = () => {
       body_fat: parseFloat(formData.bodyFat) || 0,
       active: true,
       frequency: 0,
-      avatar: `https://i.pravatar.cc/150?u=${formData.name.replace(' ', '')}`
+      avatar: `https://i.pravatar.cc/150?u=${encodeURIComponent(formData.name.trim())}`
     });
     setIsModalOpen(false);
     setFormData({ name: '', plan: '', weight: '', bodyFat: '' });

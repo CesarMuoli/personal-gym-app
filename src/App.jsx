@@ -5,6 +5,7 @@ import Students from './pages/Students';
 import Calendar from './pages/Calendar';
 import StudentProfile from './pages/StudentProfile';
 import PresentationMode from './pages/PresentationMode';
+import Finance from './pages/Finance';
 import Login from './pages/Login';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { Toaster } from 'react-hot-toast';
@@ -22,14 +23,15 @@ const AppContent = () => {
 
   return (
     <BrowserRouter>
-      <div style={{ display: 'flex', minHeight: '100vh', width: '100vw', overflow: 'hidden' }}>
+      <div className="app-layout">
         <Sidebar />
-        <main style={{ flex: 1, padding: '2rem', overflowY: 'auto' }}>
+        <main className="app-main">
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/students" element={<Students />} />
             <Route path="/student/:id" element={<StudentProfile />} />
             <Route path="/calendar" element={<Calendar />} />
+            <Route path="/finance" element={<Finance />} />
             <Route path="/presentation/:id" element={<PresentationMode />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

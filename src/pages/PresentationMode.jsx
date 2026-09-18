@@ -1,25 +1,49 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Card from '../components/UI/Card';
-import { mockStudents, mockLoadProgression, mockEmotionalHistory } from '../data/mockData';
+import { useAppContext } from '../context/AppContext';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { ArrowLeft, Target, Trophy } from 'lucide-react';
+import { ArrowLeft, Target, Trophy, Image as ImageIcon } from 'lucide-react';
 import './PresentationMode.css';
 
 const PresentationMode = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const student = mockStudents.find(s => s.id === parseInt(id)) || mockStudents[0];
+  const { students, loadProgression, emotionalHistory } = useAppContext();
+
+  const student = students.find(s => String(s.id) === String(id));
+
+  if (!student) {
+    return (
+      <div className="presentation-page flex-center" style={{ minHeight: '80vh', flexDirection: 'column', gap: '1rem' }}>
+        <h2>Aluno não encontrado</h2>
+        <button className="primary-button" onClick={() => navigate('/students')}>
+          <ArrowLeft size={18} /> Voltar para Lista de Alunos
+        </button>
+      </div>
+    );
+  }
+
+  // Filtragem isolada por aluno
+  const studentLoads = loadProgression.filter(l => String(l.student_id) === String(student.id));
+  const studentEmotions = emotionalHistory.filter(e => String(e.student_id) === String(student.id));
+
+  // Média de humor
+  const averageEmotional = studentEmotions.length > 0 
+    ? (studentEmotions.reduce((acc, curr) => acc + (Number(curr.score) || 0), 0) / studentEmotions.length).toFixed(1)
+    : student.emotionalScore || 'N/A';
+
+  const bodyFatVal = student.body_fat ?? student.bodyFat ?? 0;
 
   return (
-    <div className="presentation-page">
+    <div className="presentation-page fade-in-up">
       <header className="presentation-header flex-between">
         <button className="icon-btn-transparent" onClick={() => navigate(`/student/${student.id}`)}>
           <ArrowLeft size={20} /> Voltar ao Perfil
         </button>
         <div className="presentation-title">
           <h1>Evolução de Resultados</h1>
-          <p>{student.name}</p>
+          <p>{student.name} • {student.plan || 'Plano Personalizado'}</p>
         </div>
         <div style={{ width: '150px' }}></div>
       </header>
@@ -28,54 +52,91 @@ const PresentationMode = () => {
         <div className="presentation-col">
           <Card className="presentation-card goals-card">
             <h3 className="card-title flex-center" style={{ gap: '0.5rem', marginBottom: '0' }}>
-              <Target size={20} color="var(--accent-color)" /> Metas Estabelecidas
+              <Target size={20} color="var(--accent-color)" /> Metas & Performance
             </h3>
             <ul className="goals-list">
-              <li className="achieved"><Trophy size={16} /> Reduzir BF para 16% (Atual: {student.bodyFat}%)</li>
-              <li className="achieved"><Trophy size={16} /> Aumentar força no Supino (+15kg)</li>
-              <li><Target size={16} /> Melhorar constância (Meta: 100% | Atual: {student.frequency}%)</li>
+              <li className="achieved">
+                <Trophy size={16} /> Percentual de Gordura Atual: {bodyFatVal}%
+              </li>
+              <li className="achieved">
+                <Trophy size={16} /> Peso Corporal Registrado: {student.weight || '--'} kg
+              </li>
+              <li>
+                <Target size={16} /> Frequência Atual: {student.frequency || 0}% de assiduidade
+              </li>
             </ul>
           </Card>
 
-          <Card title="Evolução Física" className="presentation-card">
+          <Card title="Evolução Física (Fotos de Avaliação)" className="presentation-card">
             <div className="presentation-photos">
               <div className="photo-item">
-                <div className="photo-box">Antes</div>
-                <span>Início - {student.weight + 5} kg</span>
+                <div className="photo-box" style={{ overflow: 'hidden', padding: 0 }}>
+                  {student.photo_before ? (
+                    <img src={student.photo_before} alt="Antes" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
+                      <ImageIcon size={24} />
+                      <span style={{ fontSize: '0.8rem' }}>Sem foto (Antes)</span>
+                    </div>
+                  )}
+                </div>
+                <span>Início do Processo</span>
               </div>
+
               <div className="photo-item">
-                <div className="photo-box success">Depois</div>
-                <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>Hoje - {student.weight} kg</span>
+                <div className="photo-box success" style={{ overflow: 'hidden', padding: 0 }}>
+                  {student.photo_after ? (
+                    <img src={student.photo_after} alt="Depois" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
+                      <ImageIcon size={24} />
+                      <span style={{ fontSize: '0.8rem' }}>Sem foto (Atual)</span>
+                    </div>
+                  )}
+                </div>
+                <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>Evolução Atual</span>
               </div>
             </div>
           </Card>
         </div>
 
         <div className="presentation-col">
-          <Card title="Evolução de Força (Supino)" className="presentation-card">
+          <Card title={`Evolução de Cargas (${studentLoads.length} registros)`} className="presentation-card">
             <div style={{ height: '220px', width: '100%' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={mockLoadProgression}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                  <XAxis dataKey="week" stroke="var(--text-secondary)" />
-                  <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'white' }} cursor={{fill: 'rgba(255,255,255,0.05)'}} />
-                  <Bar dataKey="load" fill="var(--accent-color)" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              {studentLoads.length === 0 ? (
+                <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
+                  Nenhum registro de carga ainda.
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={studentLoads}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                    <XAxis dataKey="week" stroke="var(--text-secondary)" />
+                    <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'white' }} cursor={{fill: 'rgba(255,255,255,0.05)'}} />
+                    <Bar dataKey="load" fill="var(--accent-color)" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </Card>
 
-          <Card title="Bem-estar Percebido (Média: 11.8/15)" className="presentation-card">
+          <Card title={`Humor & Disposição Pós-Treino (Média: ${averageEmotional}/15)`} className="presentation-card">
             <div style={{ height: '220px', width: '100%' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={mockEmotionalHistory}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                  <XAxis dataKey="date" stroke="var(--text-secondary)" />
-                  <YAxis domain={[0, 15]} stroke="var(--text-secondary)" hide />
-                  <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'white' }} />
-                  <Line type="monotone" dataKey="score" stroke="var(--info)" strokeWidth={4} dot={{ r: 5, fill: 'var(--bg-card)', stroke: 'var(--info)', strokeWidth: 2 }} />
-                </LineChart>
-              </ResponsiveContainer>
+              {studentEmotions.length === 0 ? (
+                <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
+                  Nenhum registro emocional pós-treino ainda.
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={studentEmotions}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                    <XAxis dataKey="date" stroke="var(--text-secondary)" />
+                    <YAxis domain={[0, 15]} stroke="var(--text-secondary)" hide />
+                    <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'white' }} />
+                    <Line type="monotone" dataKey="score" stroke="var(--info)" strokeWidth={4} dot={{ r: 5, fill: 'var(--bg-card)', stroke: 'var(--info)', strokeWidth: 2 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </Card>
         </div>
@@ -83,4 +144,5 @@ const PresentationMode = () => {
     </div>
   );
 };
+
 export default PresentationMode;
