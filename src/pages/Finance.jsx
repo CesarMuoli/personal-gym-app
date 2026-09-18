@@ -2,7 +2,19 @@ import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import Card from '../components/UI/Card';
 import Modal from '../components/UI/Modal';
-import { DollarSign, TrendingUp, Target, AlertCircle, CheckCircle2, Clock, Calendar as CalendarIcon, Check } from 'lucide-react';
+import { 
+  DollarSign, 
+  TrendingUp, 
+  Target, 
+  AlertCircle, 
+  CheckCircle2, 
+  Clock, 
+  Calendar as CalendarIcon, 
+  Check, 
+  Hourglass,
+  AlertTriangle,
+  Flame
+} from 'lucide-react';
 import { getLocalDateString } from '../utils/dateUtils';
 import './Finance.css';
 
@@ -14,7 +26,7 @@ const Finance = () => {
     quarterly_goal: financialGoals?.quarterly_goal || 0
   });
 
-  // Cálculos Financeiros
+  // Cálculos Financeiros Gerais
   const activeStudents = students.filter(s => s.active);
   const totalRevenue = activeStudents.reduce((acc, student) => acc + (Number(student.monthly_fee) || 0), 0);
   const averageTicket = activeStudents.length > 0 ? totalRevenue / activeStudents.length : 0;
@@ -23,15 +35,26 @@ const Finance = () => {
   const quarterlyRevenueEstimate = totalRevenue * 3;
   const quarterlyGoalProgress = financialGoals?.quarterly_goal > 0 ? (quarterlyRevenueEstimate / financialGoals.quarterly_goal) * 100 : 0;
 
-  // Lógica de Status de Pagamento
+  // Lógica de Datas e Prazos
   const todayDate = new Date();
   const currentMonth = todayDate.getMonth();
   const currentYear = todayDate.getFullYear();
   const currentDay = todayDate.getDate();
 
+  // Contagem de dias restantes para o fechamento do mês
+  const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const daysRemainingMonth = Math.max(0, lastDayOfMonth - currentDay);
+
+  // Contagem de dias restantes no trimestre atual
+  const currentQuarter = Math.floor(currentMonth / 3); // 0 (Q1), 1 (Q2), 2 (Q3), 3 (Q4)
+  const quarterEndMonth = (currentQuarter + 1) * 3 - 1;
+  const quarterEndDate = new Date(currentYear, quarterEndMonth + 1, 0, 23, 59, 59);
+  const diffTime = quarterEndDate.getTime() - todayDate.getTime();
+  const daysRemainingQuarter = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+  const quarterName = `Q${currentQuarter + 1}`;
+
+  // Classificação Canônica em 3 Grupos (Sem duplicidade)
   const getPaymentStatus = (student) => {
-    if (!student.monthly_fee) return 'unconfigured';
-    
     let isPaidThisMonth = false;
     if (student.last_payment_date) {
       try {
@@ -53,16 +76,19 @@ const Finance = () => {
     const daysUntilDue = dueDate - currentDay;
 
     if (daysUntilDue < 0) return 'late';
-    if (daysUntilDue <= 3) return 'warning';
-    return 'pending';
+    return 'upcoming';
   };
 
   const statusGroups = {
     paid: activeStudents.filter(s => getPaymentStatus(s) === 'paid'),
-    warning: activeStudents.filter(s => getPaymentStatus(s) === 'warning'),
-    late: activeStudents.filter(s => getPaymentStatus(s) === 'late'),
-    pending: activeStudents.filter(s => getPaymentStatus(s) === 'pending' || getPaymentStatus(s) === 'unconfigured')
+    upcoming: activeStudents.filter(s => getPaymentStatus(s) === 'upcoming'),
+    late: activeStudents.filter(s => getPaymentStatus(s) === 'late')
   };
+
+  // Totais financeiros por coluna
+  const paidTotal = statusGroups.paid.reduce((acc, s) => acc + (Number(s.monthly_fee) || 0), 0);
+  const upcomingTotal = statusGroups.upcoming.reduce((acc, s) => acc + (Number(s.monthly_fee) || 0), 0);
+  const lateTotal = statusGroups.late.reduce((acc, s) => acc + (Number(s.monthly_fee) || 0), 0);
 
   const handleQuickPay = async (student) => {
     const today = getLocalDateString();
@@ -84,12 +110,24 @@ const Finance = () => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   };
 
+  const formatPaidDate = (dateStr) => {
+    if (!dateStr) return '';
+    try {
+      const clean = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+      const [y, m, d] = clean.split('-');
+      if (d && m) return `em ${d}/${m}`;
+      return '';
+    } catch {
+      return '';
+    }
+  };
+
   return (
     <div className="finance-page fade-in-up">
       <header className="page-header flex-between">
         <div>
           <h1 className="title">Gestão Financeira</h1>
-          <p className="subtitle">Acompanhamento de faturamento e mensalidades</p>
+          <p className="subtitle">Controle de caixa, metas e mensalidades em tempo real</p>
         </div>
         <button className="secondary-button" onClick={() => {
           setGoalsForm({ monthly_goal: financialGoals?.monthly_goal || 0, quarterly_goal: financialGoals?.quarterly_goal || 0 });
@@ -99,131 +137,126 @@ const Finance = () => {
         </button>
       </header>
 
-      {/* Cards de Métricas */}
+      {/* Cards de Métricas com Identidade Cromática Distinta (UI/UX 10/10) */}
       <div className="metrics-grid">
-        <Card className="metric-card glow-card">
-          <div className="metric-icon revenue-icon"><DollarSign size={24} /></div>
+        
+        {/* 1. Faturamento Mensal (Cyan Neon) */}
+        <Card className="metric-card glow-card-cyan">
+          <div className="metric-icon revenue-icon">
+            <DollarSign size={24} />
+          </div>
           <h3>Faturamento Mensal</h3>
           <p className="metric-value">{formatCurrency(totalRevenue)}</p>
+          <span className="metric-helper">Receita ativa de {activeStudents.length} alunos</span>
         </Card>
 
-        <Card className="metric-card glow-card">
-          <div className="metric-icon ticket-icon"><TrendingUp size={24} /></div>
+        {/* 2. Ticket Médio (Cyber Purple Neon) */}
+        <Card className="metric-card glow-card-purple">
+          <div className="metric-icon ticket-icon">
+            <TrendingUp size={24} />
+          </div>
           <h3>Ticket Médio</h3>
           <p className="metric-value">{formatCurrency(averageTicket)}</p>
+          <span className="metric-helper">Média por aluno ativo</span>
         </Card>
 
-        <Card className="metric-card progress-card glow-card">
-          <div className="flex-between">
-            <h3>Meta Mensal</h3>
-            <span className="goal-target">Alvo: {formatCurrency(financialGoals?.monthly_goal || 0)}</span>
+        {/* 3. Meta Mensal (Emerald Neon + Timer) */}
+        <Card className="metric-card progress-card glow-card-green">
+          <div className="flex-between metric-header-flex">
+            <div className="metric-header-left">
+              <div className="metric-icon goal-monthly-icon">
+                <Target size={22} />
+              </div>
+              <div>
+                <h3>Meta Mensal</h3>
+                <span className="goal-target">Alvo: {formatCurrency(financialGoals?.monthly_goal || 0)}</span>
+              </div>
+            </div>
+            <div className="goal-timer-badge green" title="Dias restantes para fechar o mês">
+              <Hourglass size={13} />
+              <span>{daysRemainingMonth === 0 ? 'Último dia!' : `Faltam ${daysRemainingMonth} dias`}</span>
+            </div>
           </div>
           <div className="progress-bar-bg">
-            <div className="progress-bar-fill" style={{ width: `${Math.min(monthlyGoalProgress, 100)}%`, backgroundColor: monthlyGoalProgress >= 100 ? 'var(--success)' : 'var(--accent-color)' }}></div>
+            <div 
+              className="progress-bar-fill progress-fill-green" 
+              style={{ width: `${Math.min(monthlyGoalProgress, 100)}%` }}
+            />
           </div>
-          <p className="metric-sub">Progresso: {monthlyGoalProgress.toFixed(1)}%</p>
+          <div className="flex-between metric-sub-row">
+            <p className="metric-sub">Progresso: <strong>{monthlyGoalProgress.toFixed(1)}%</strong></p>
+            <p className="metric-sub">
+              {monthlyGoalProgress >= 100 ? (
+                <span className="goal-reached-text">Meta Atingida! 🚀</span>
+              ) : (
+                `Falta ${formatCurrency(Math.max(0, (financialGoals?.monthly_goal || 0) - totalRevenue))}`
+              )}
+            </p>
+          </div>
         </Card>
 
-        <Card className="metric-card progress-card glow-card">
-          <div className="flex-between">
-            <h3>Meta Trimestral</h3>
-            <span className="goal-target">Alvo: {formatCurrency(financialGoals?.quarterly_goal || 0)}</span>
+        {/* 4. Meta Trimestral (Gold / Amber Neon + Timer) */}
+        <Card className="metric-card progress-card glow-card-amber">
+          <div className="flex-between metric-header-flex">
+            <div className="metric-header-left">
+              <div className="metric-icon goal-quarterly-icon">
+                <Target size={22} />
+              </div>
+              <div>
+                <h3>Meta Trimestral ({quarterName})</h3>
+                <span className="goal-target">Alvo: {formatCurrency(financialGoals?.quarterly_goal || 0)}</span>
+              </div>
+            </div>
+            <div className="goal-timer-badge amber" title="Dias restantes para encerrar o trimestre">
+              <Hourglass size={13} />
+              <span>{daysRemainingQuarter === 0 ? 'Fim do tri!' : `Faltam ${daysRemainingQuarter} dias`}</span>
+            </div>
           </div>
           <div className="progress-bar-bg">
-            <div className="progress-bar-fill" style={{ width: `${Math.min(quarterlyGoalProgress, 100)}%`, backgroundColor: quarterlyGoalProgress >= 100 ? 'var(--success)' : 'var(--info)' }}></div>
+            <div 
+              className="progress-bar-fill progress-fill-amber" 
+              style={{ width: `${Math.min(quarterlyGoalProgress, 100)}%` }}
+            />
           </div>
-          <p className="metric-sub">Projeção: {quarterlyGoalProgress.toFixed(1)}%</p>
+          <div className="flex-between metric-sub-row">
+            <p className="metric-sub">Projeção: <strong>{quarterlyGoalProgress.toFixed(1)}%</strong></p>
+            <p className="metric-sub">Est. Tri: <strong>{formatCurrency(quarterlyRevenueEstimate)}</strong></p>
+          </div>
         </Card>
       </div>
 
-      {/* Controle de Inadimplência e Mensalidades */}
-      <h2 className="section-title" style={{ marginTop: '3rem', marginBottom: '1.5rem' }}>Status de Mensalidades (Mês Atual)</h2>
+      {/* Controle de Mensalidades - Nova Ordem Didática e Focada no Sucesso */}
+      <div className="status-section-header flex-between">
+        <div>
+          <h2 className="section-title">Status de Mensalidades (Mês Atual)</h2>
+          <p className="section-subtitle">Acompanhe quem já pagou, os próximos vencimentos e cobranças pendentes</p>
+        </div>
+      </div>
+
+      {/* Grade de 3 Colunas Canônicas (Pagos -> A Vencer -> Atrasados) */}
       <div className="status-grid">
         
-        {/* Atrasados */}
-        <Card title={<div style={{display:'flex', alignItems:'center', gap:'0.5rem', color:'var(--danger)'}}><AlertCircle size={20}/> Atrasados</div>} className="status-col late">
-          {statusGroups.late.length === 0 ? <p className="empty-text">Nenhum aluno atrasado!</p> : (
-            <ul className="student-list">
-              {statusGroups.late.map(s => (
-                <li key={s.id} className="student-item flex-between">
-                  <div className="student-item-left">
-                    <img src={s.avatar || `https://i.pravatar.cc/150?u=${s.id}`} alt={s.name} />
-                    <div className="student-info">
-                      <strong>{s.name}</strong>
-                      <span>Venceu dia {s.due_date || 10} • {formatCurrency(s.monthly_fee)}</span>
-                    </div>
-                  </div>
-                  <button 
-                    className="quick-pay-btn" 
-                    title="Dar baixa no pagamento deste mês"
-                    onClick={() => handleQuickPay(s)}
-                  >
-                    <Check size={14} />
-                    <span>Baixa</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        {/* Próximos do Vencimento */}
-        <Card title={<div style={{display:'flex', alignItems:'center', gap:'0.5rem', color:'var(--warning)'}}><Clock size={20}/> Vencendo em Breve</div>} className="status-col warning">
-          {statusGroups.warning.length === 0 ? <p className="empty-text">Nenhum vencimento próximo.</p> : (
-            <ul className="student-list">
-              {statusGroups.warning.map(s => (
-                <li key={s.id} className="student-item flex-between">
-                  <div className="student-item-left">
-                    <img src={s.avatar || `https://i.pravatar.cc/150?u=${s.id}`} alt={s.name} />
-                    <div className="student-info">
-                      <strong>{s.name}</strong>
-                      <span>Vence dia {s.due_date || 10} • {formatCurrency(s.monthly_fee)}</span>
-                    </div>
-                  </div>
-                  <button 
-                    className="quick-pay-btn" 
-                    title="Dar baixa no pagamento deste mês"
-                    onClick={() => handleQuickPay(s)}
-                  >
-                    <Check size={14} />
-                    <span>Baixa</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        {/* A Vencer / No Prazo */}
-        <Card title={<div style={{display:'flex', alignItems:'center', gap:'0.5rem', color:'var(--info)'}}><CalendarIcon size={20}/> A Vencer (No Prazo)</div>} className="status-col pending">
-          {statusGroups.pending.length === 0 ? <p className="empty-text">Nenhuma mensalidade a vencer.</p> : (
-            <ul className="student-list">
-              {statusGroups.pending.map(s => (
-                <li key={s.id} className="student-item flex-between">
-                  <div className="student-item-left">
-                    <img src={s.avatar || `https://i.pravatar.cc/150?u=${s.id}`} alt={s.name} />
-                    <div className="student-info">
-                      <strong>{s.name}</strong>
-                      <span>Vence dia {s.due_date || 10} • {formatCurrency(s.monthly_fee)}</span>
-                    </div>
-                  </div>
-                  <button 
-                    className="quick-pay-btn" 
-                    title="Dar baixa antecipada no pagamento"
-                    onClick={() => handleQuickPay(s)}
-                  >
-                    <Check size={14} />
-                    <span>Baixa</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        {/* Em Dia / Pagos */}
-        <Card title={<div style={{display:'flex', alignItems:'center', gap:'0.5rem', color:'var(--success)'}}><CheckCircle2 size={20}/> Pagos neste mês</div>} className="status-col paid">
-          {statusGroups.paid.length === 0 ? <p className="empty-text">Nenhum pagamento registrado neste mês.</p> : (
+        {/* COLUNA 1 (Verde): O que o Personal já ganhou no mês (Receita Garantida) */}
+        <Card 
+          title={
+            <div className="status-col-header">
+              <div className="status-col-title" style={{ color: 'var(--success)' }}>
+                <CheckCircle2 size={20} />
+                <span>Pagos no Mês</span>
+              </div>
+              <div className="status-col-meta">
+                <span className="status-count-badge paid">{statusGroups.paid.length}</span>
+                <span className="status-total-val paid">{formatCurrency(paidTotal)}</span>
+              </div>
+            </div>
+          } 
+          className="status-col paid glow-border-green"
+        >
+          {statusGroups.paid.length === 0 ? (
+            <div className="empty-state-box">
+              <p className="empty-text">Nenhum pagamento registrado neste mês ainda.</p>
+            </div>
+          ) : (
             <ul className="student-list">
               {statusGroups.paid.map(s => (
                 <li key={s.id} className="student-item flex-between">
@@ -231,7 +264,7 @@ const Finance = () => {
                     <img src={s.avatar || `https://i.pravatar.cc/150?u=${s.id}`} alt={s.name} />
                     <div className="student-info">
                       <strong>{s.name}</strong>
-                      <span>{formatCurrency(s.monthly_fee)}</span>
+                      <span>{formatCurrency(s.monthly_fee)} • {formatPaidDate(s.last_payment_date)}</span>
                     </div>
                   </div>
                   <span className="paid-tag-status">
@@ -242,8 +275,129 @@ const Finance = () => {
             </ul>
           )}
         </Card>
+
+        {/* COLUNA 2 (Cyan/Âmbar): O que vai vencer (Previsão de Receita com Alertas Inteligentes) */}
+        <Card 
+          title={
+            <div className="status-col-header">
+              <div className="status-col-title" style={{ color: 'var(--accent-color)' }}>
+                <Clock size={20} />
+                <span>A Vencer</span>
+              </div>
+              <div className="status-col-meta">
+                <span className="status-count-badge upcoming">{statusGroups.upcoming.length}</span>
+                <span className="status-total-val upcoming">{formatCurrency(upcomingTotal)}</span>
+              </div>
+            </div>
+          } 
+          className="status-col upcoming glow-border-cyan"
+        >
+          {statusGroups.upcoming.length === 0 ? (
+            <div className="empty-state-box">
+              <p className="empty-text">Tudo quitado! Nenhuma mensalidade a vencer.</p>
+            </div>
+          ) : (
+            <ul className="student-list">
+              {statusGroups.upcoming.map(s => {
+                const dueDate = Number(s.due_date) || 10;
+                const daysUntilDue = dueDate - currentDay;
+
+                return (
+                  <li key={s.id} className="student-item flex-between">
+                    <div className="student-item-left">
+                      <img src={s.avatar || `https://i.pravatar.cc/150?u=${s.id}`} alt={s.name} />
+                      <div className="student-info">
+                        <strong>{s.name}</strong>
+                        <div className="student-due-meta">
+                          <span>{formatCurrency(s.monthly_fee)}</span>
+                          {daysUntilDue === 0 ? (
+                            <span className="badge-due-today">
+                              <Flame size={12} /> Vence Hoje
+                            </span>
+                          ) : daysUntilDue <= 3 ? (
+                            <span className="badge-due-soon">
+                              <AlertTriangle size={12} /> Vence em {daysUntilDue}d
+                            </span>
+                          ) : (
+                            <span className="badge-due-normal">
+                              <CalendarIcon size={12} /> Dia {dueDate}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <button 
+                      className="quick-pay-btn" 
+                      title="Dar baixa no pagamento deste mês"
+                      onClick={() => handleQuickPay(s)}
+                    >
+                      <Check size={14} />
+                      <span>Baixa</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Card>
+
+        {/* COLUNA 3 (Vermelho): Inadimplência / Cobranças (Ação Necessária) */}
+        <Card 
+          title={
+            <div className="status-col-header">
+              <div className="status-col-title" style={{ color: 'var(--danger)' }}>
+                <AlertCircle size={20} />
+                <span>Em Atraso</span>
+              </div>
+              <div className="status-col-meta">
+                <span className="status-count-badge late">{statusGroups.late.length}</span>
+                <span className="status-total-val late">{formatCurrency(lateTotal)}</span>
+              </div>
+            </div>
+          } 
+          className="status-col late glow-border-red"
+        >
+          {statusGroups.late.length === 0 ? (
+            <div className="empty-state-box">
+              <p className="empty-text">Zero inadimplência! Parabéns.</p>
+            </div>
+          ) : (
+            <ul className="student-list">
+              {statusGroups.late.map(s => {
+                const dueDate = Number(s.due_date) || 10;
+                const daysLate = currentDay - dueDate;
+
+                return (
+                  <li key={s.id} className="student-item flex-between">
+                    <div className="student-item-left">
+                      <img src={s.avatar || `https://i.pravatar.cc/150?u=${s.id}`} alt={s.name} />
+                      <div className="student-info">
+                        <strong>{s.name}</strong>
+                        <div className="student-due-meta">
+                          <span>{formatCurrency(s.monthly_fee)}</span>
+                          <span className="badge-due-late">
+                            <AlertCircle size={12} /> {daysLate}d de atraso
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <button 
+                      className="quick-pay-btn quick-pay-late" 
+                      title="Receber e dar baixa no pagamento"
+                      onClick={() => handleQuickPay(s)}
+                    >
+                      <Check size={14} />
+                      <span>Baixa</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Card>
       </div>
 
+      {/* Modal de Definição de Metas */}
       <Modal isOpen={isGoalModalOpen} onClose={() => setIsGoalModalOpen(false)} title="Definir Metas Financeiras">
         <form onSubmit={handleSaveGoals}>
           <div className="form-group">

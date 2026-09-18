@@ -3,116 +3,336 @@
   flex-direction: column;
 }
 
+/* ==========================================================================
+   CARDS DE MÉTRICAS CROMÁTICOS (UI/UX PREMIUM 10/10)
+   ========================================================================== */
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.5rem;
+  gap: 1.25rem;
   margin-top: 1.5rem;
 }
 
 .metric-card {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
+  padding: 1.35rem;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  min-height: 160px;
 }
 
-.glow-card {
-  position: relative;
-  border-color: rgba(0, 240, 255, 0.3);
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.05);
+.metric-card:hover {
+  transform: translateY(-2px);
 }
 
-.glow-card-purple {
-  position: relative;
-  border-color: rgba(139, 92, 246, 0.3);
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.05);
-}
-
-.metric-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1rem;
+/* 1. Faturamento Mensal - Cyan Neon */
+.glow-card-cyan {
+  border: 1px solid rgba(0, 240, 255, 0.25) !important;
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.08) 0%, rgba(18, 18, 26, 0.85) 100%) !important;
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.06);
 }
 
 .metric-icon.revenue-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   color: var(--accent-color);
-  background: rgba(0, 240, 255, 0.1);
-  border: 1px solid rgba(0, 240, 255, 0.25);
-  box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.85rem;
+}
+
+/* 2. Ticket Médio - Cyber Purple Neon */
+.glow-card-purple {
+  border: 1px solid rgba(168, 85, 247, 0.25) !important;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(18, 18, 26, 0.85) 100%) !important;
+  box-shadow: 0 0 25px rgba(168, 85, 247, 0.06);
 }
 
 .metric-icon.ticket-icon {
-  color: var(--accent-secondary);
-  background: rgba(139, 92, 246, 0.12);
-  border: 1px solid rgba(139, 92, 246, 0.25);
-  box-shadow: 0 0 15px rgba(139, 92, 246, 0.15);
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  color: #c084fc;
+  background: rgba(168, 85, 247, 0.14);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.85rem;
 }
 
-.metric-card h3 {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-  margin-bottom: 0.5rem;
+/* 3. Meta Mensal - Emerald Green Neon */
+.glow-card-green {
+  border: 1px solid rgba(16, 185, 129, 0.25) !important;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(18, 18, 26, 0.85) 100%) !important;
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.06);
 }
 
-.metric-value {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #fff;
-}
-
-.metric-sub {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  margin-top: 0.25rem;
-}
-
-.progress-card {
+.metric-icon.goal-monthly-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  color: var(--success);
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
+  display: flex;
+  align-items: center;
   justify-content: center;
 }
 
+/* 4. Meta Trimestral - Solar Amber/Gold Neon */
+.glow-card-amber {
+  border: 1px solid rgba(245, 158, 11, 0.25) !important;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(18, 18, 26, 0.85) 100%) !important;
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.06);
+}
+
+.metric-icon.goal-quarterly-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.metric-card h3 {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 0.35rem;
+}
+
+.metric-value {
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.metric-helper {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 0.25rem;
+}
+
+/* Layout dos cabeçalhos das metas */
+.metric-header-flex {
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.metric-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.goal-target {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+/* Timer Badges (Contador de dias restantes) */
+.goal-timer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.goal-timer-badge.green {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34d399;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
+}
+
+.goal-timer-badge.amber {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.1);
+}
+
+/* Barras de Progresso Iluminadas */
 .progress-bar-bg {
   width: 100%;
   height: 8px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 4px;
-  margin: 1rem 0;
+  margin: 0.85rem 0 0.65rem 0;
   overflow: hidden;
 }
 
 .progress-bar-fill {
   height: 100%;
   border-radius: 4px;
-  transition: width 1s ease-in-out;
+  transition: width 0.8s ease-in-out;
+}
+
+.progress-fill-green {
+  background: linear-gradient(90deg, #10b981, #00ff88);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
+}
+
+.progress-fill-amber {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
+}
+
+.metric-sub-row {
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.metric-sub {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.metric-sub strong {
+  color: #fff;
+}
+
+.goal-reached-text {
+  color: #34d399;
+  font-weight: 600;
+  text-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+}
+
+/* ==========================================================================
+   SEÇÃO DE MENSALIDADES (3 COLUNAS CANÔNICAS DIDÁTICAS)
+   ========================================================================== */
+.status-section-header {
+  margin-top: 2.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.section-subtitle {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
 }
 
 .status-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1.25rem;
 }
 
-.status-col.late {
-  border-top: 2px solid var(--danger);
+@media (max-width: 1024px) {
+  .status-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
-.status-col.warning {
-  border-top: 2px solid var(--warning);
+/* Cabeçalho de cada coluna */
+.status-col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
 }
 
-.status-col.pending {
-  border-top: 2px solid var(--info);
+.status-col-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 600;
 }
 
-.status-col.paid {
-  border-top: 2px solid var(--success);
+.status-col-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
 }
 
+.status-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 0.4rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.status-count-badge.paid {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--success);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.status-count-badge.upcoming {
+  background: rgba(0, 240, 255, 0.15);
+  color: var(--accent-color);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+}
+
+.status-count-badge.late {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--danger);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.status-total-val {
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.status-total-val.paid {
+  color: var(--success);
+}
+
+.status-total-val.upcoming {
+  color: var(--accent-color);
+}
+
+.status-total-val.late {
+  color: var(--danger);
+}
+
+/* Bordas iluminadas para cada coluna */
+.glow-border-green {
+  border-top: 3px solid var(--success) !important;
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.05);
+}
+
+.glow-border-cyan {
+  border-top: 3px solid var(--accent-color) !important;
+  box-shadow: 0 4px 20px rgba(0, 240, 255, 0.05);
+}
+
+.glow-border-red {
+  border-top: 3px solid var(--danger) !important;
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.05);
+}
+
+/* ==========================================================================
+   LISTAGEM DE ALUNOS & BADGES INTELIGENTES
+   ========================================================================== */
 .student-list {
   list-style: none;
   padding: 0;
@@ -123,13 +343,18 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.9rem 0.5rem;
+  padding: 0.9rem 0.35rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   gap: 0.75rem;
+  transition: background 0.2s ease;
 }
 
 .student-item:last-child {
   border-bottom: none;
+}
+
+.student-item:hover {
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .student-item-left {
@@ -140,24 +365,116 @@
 }
 
 .student-item img {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.student-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.student-info strong {
+  font-size: 0.92rem;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.student-due-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.student-due-meta span:first-child {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* Badges de Status Específicos */
+.badge-due-today {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.18);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #ff6b6b;
+  font-size: 0.72rem;
+  font-weight: 700;
+  animation: pulseWarning 2s infinite ease-in-out;
+}
+
+.badge-due-soon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.badge-due-normal {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 12px;
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  color: var(--accent-color);
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+.badge-due-late {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #ef4444;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+@keyframes pulseWarning {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(239, 68, 68, 0);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+  }
+}
+
+/* Botão Rápido de Dar Baixa */
 .quick-pay-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.4rem 0.75rem;
+  padding: 0.45rem 0.8rem;
   border-radius: 8px;
   background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  border: 1px solid rgba(16, 185, 129, 0.35);
   color: var(--success);
   font-size: 0.78rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
@@ -167,42 +484,46 @@
 .quick-pay-btn:hover {
   background: var(--success);
   color: #000;
-  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.5);
   transform: translateY(-1px);
 }
 
+.quick-pay-btn.quick-pay-late {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #ff6b6b;
+}
+
+.quick-pay-btn.quick-pay-late:hover {
+  background: var(--success);
+  border-color: var(--success);
+  color: #000;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.5);
+}
+
+/* Tag de Pago Confirmado */
 .paid-tag-status {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.35rem 0.65rem;
+  padding: 0.35rem 0.7rem;
   border-radius: 20px;
-  background: rgba(16, 185, 129, 0.1);
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
   color: var(--success);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
 }
 
-.student-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.student-info strong {
-  font-size: 0.95rem;
-  color: #fff;
-}
-
-.student-info span {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  margin-top: 0.25rem;
+/* Estado vazio limpo */
+.empty-state-box {
+  padding: 2.5rem 1rem;
+  text-align: center;
 }
 
 .empty-text {
   color: var(--text-secondary);
-  font-size: 0.9rem;
-  text-align: center;
-  padding: 2rem 0;
+  font-size: 0.88rem;
+  margin: 0;
 }
