@@ -3,7 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import Card from '../components/UI/Card';
 import Modal from '../components/UI/Modal';
 import { useAppContext } from '../context/AppContext';
-import { Search, Filter, MoreVertical, Activity } from 'lucide-react';
+import { 
+  Search, 
+  Filter, 
+  MoreVertical, 
+  Activity, 
+  ArrowDownAZ, 
+  ArrowUpAZ, 
+  Clock, 
+  TrendingUp, 
+  Check, 
+  X,
+  RotateCcw
+} from 'lucide-react';
 import './Students.css';
 
 const Students = () => {
@@ -11,11 +23,37 @@ const Students = () => {
   const { students, addStudent, loading } = useAppContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [sortOrder, setSortOrder] = useState('az'); // Padrão: A-Z
+  const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'active', 'inactive'
+
   const [formData, setFormData] = useState({ name: '', plan: '', weight: '', bodyFat: '' });
 
-  const filteredStudents = students.filter(s => 
-    s.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filtragem e Ordenação dos Alunos
+  const filteredStudents = students
+    .filter(s => {
+      const matchesSearch = 
+        (s.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (s.plan || '').toLowerCase().includes(searchTerm.toLowerCase());
+      if (!matchesSearch) return false;
+
+      if (statusFilter === 'active') return !!s.active;
+      if (statusFilter === 'inactive') return !s.active;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortOrder === 'az') {
+        return (a.name || '').localeCompare(b.name || '', 'pt-BR', { sensitivity: 'base' });
+      }
+      if (sortOrder === 'za') {
+        return (b.name || '').localeCompare(a.name || '', 'pt-BR', { sensitivity: 'base' });
+      }
+      if (sortOrder === 'frequency') {
+        return (Number(b.frequency) || 0) - (Number(a.frequency) || 0);
+      }
+      // 'recent'
+      return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,6 +68,14 @@ const Students = () => {
     });
     setIsModalOpen(false);
     setFormData({ name: '', plan: '', weight: '', bodyFat: '' });
+  };
+
+  const getSortLabel = () => {
+    if (sortOrder === 'az') return 'A → Z';
+    if (sortOrder === 'za') return 'Z → A';
+    if (sortOrder === 'frequency') return 'Frequência';
+    if (sortOrder === 'recent') return 'Recentes';
+    return '';
   };
 
   if (loading) return <div style={{ padding: '2rem' }}>Carregando alunos...</div>;
@@ -55,12 +101,119 @@ const Students = () => {
             className="search-input"
           />
         </div>
-        <button className="icon-btn-square"><Filter size={18} /> Filtrar</button>
+
+        {/* Menu Dropdown de Filtragem e Ordenação */}
+        <div className="filter-wrapper">
+          <button 
+            className={`icon-btn-square ${isFilterOpen || sortOrder !== 'recent' || statusFilter !== 'all' ? 'active' : ''}`}
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+          >
+            <Filter size={18} /> 
+            <span>Filtrar: {getSortLabel()}</span>
+          </button>
+
+          {isFilterOpen && (
+            <>
+              <div className="filter-backdrop" onClick={() => setIsFilterOpen(false)} />
+              <div className="filter-dropdown glass-panel fade-in-up">
+                <div className="filter-dropdown-header flex-between">
+                  <span className="filter-dropdown-title">Filtros & Ordenação</span>
+                  <button className="icon-btn-close" onClick={() => setIsFilterOpen(false)}>
+                    <X size={16} />
+                  </button>
+                </div>
+
+                <div className="filter-section">
+                  <span className="filter-section-label">Ordem Alfabética</span>
+                  <button 
+                    className={`filter-option ${sortOrder === 'az' ? 'selected' : ''}`}
+                    onClick={() => { setSortOrder('az'); setIsFilterOpen(false); }}
+                  >
+                    <div className="filter-option-content">
+                      <ArrowDownAZ size={16} />
+                      <span>Nome (A → Z)</span>
+                    </div>
+                    {sortOrder === 'az' && <Check size={16} color="var(--accent-color)" />}
+                  </button>
+                  <button 
+                    className={`filter-option ${sortOrder === 'za' ? 'selected' : ''}`}
+                    onClick={() => { setSortOrder('za'); setIsFilterOpen(false); }}
+                  >
+                    <div className="filter-option-content">
+                      <ArrowUpAZ size={16} />
+                      <span>Nome (Z → A)</span>
+                    </div>
+                    {sortOrder === 'za' && <Check size={16} color="var(--accent-color)" />}
+                  </button>
+                </div>
+
+                <div className="filter-section">
+                  <span className="filter-section-label">Outras Ordenações</span>
+                  <button 
+                    className={`filter-option ${sortOrder === 'recent' ? 'selected' : ''}`}
+                    onClick={() => { setSortOrder('recent'); setIsFilterOpen(false); }}
+                  >
+                    <div className="filter-option-content">
+                      <Clock size={16} />
+                      <span>Mais Recentes</span>
+                    </div>
+                    {sortOrder === 'recent' && <Check size={16} color="var(--accent-color)" />}
+                  </button>
+                  <button 
+                    className={`filter-option ${sortOrder === 'frequency' ? 'selected' : ''}`}
+                    onClick={() => { setSortOrder('frequency'); setIsFilterOpen(false); }}
+                  >
+                    <div className="filter-option-content">
+                      <TrendingUp size={16} />
+                      <span>Maior Frequência</span>
+                    </div>
+                    {sortOrder === 'frequency' && <Check size={16} color="var(--accent-color)" />}
+                  </button>
+                </div>
+
+                <div className="filter-section">
+                  <span className="filter-section-label">Status</span>
+                  <div className="status-filter-pills">
+                    <button 
+                      className={`status-pill ${statusFilter === 'all' ? 'active' : ''}`}
+                      onClick={() => setStatusFilter('all')}
+                    >
+                      Todos
+                    </button>
+                    <button 
+                      className={`status-pill ${statusFilter === 'active' ? 'active' : ''}`}
+                      onClick={() => setStatusFilter('active')}
+                    >
+                      Ativos
+                    </button>
+                    <button 
+                      className={`status-pill ${statusFilter === 'inactive' ? 'active' : ''}`}
+                      onClick={() => setStatusFilter('inactive')}
+                    >
+                      Inativos
+                    </button>
+                  </div>
+                </div>
+
+                {(sortOrder !== 'az' || statusFilter !== 'all') && (
+                  <button 
+                    className="reset-filter-btn"
+                    onClick={() => { setSortOrder('az'); setStatusFilter('all'); setIsFilterOpen(false); }}
+                  >
+                    <RotateCcw size={14} /> Restaurar Padrão (A-Z)
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="students-grid">
         {filteredStudents.length === 0 ? (
-          <p style={{ color: 'var(--text-secondary)' }}>Nenhum aluno encontrado.</p>
+          <div style={{ color: 'var(--text-secondary)', padding: '2rem 0', textAlign: 'center', gridColumn: '1 / -1' }}>
+            Nenhum aluno encontrado para os filtros selecionados.
+          </div>
         ) : (
           filteredStudents.map(student => (
             <Card key={student.id} className="student-card">
@@ -83,7 +236,7 @@ const Students = () => {
                   </div>
                   <div className="stat">
                     <span className="stat-label">Última Aula</span>
-                    <span className="stat-value">{student.last_class ? new Date(student.last_class).toLocaleDateString() : 'N/A'}</span>
+                    <span className="stat-value">{student.last_class ? new Date(student.last_class).toLocaleDateString('pt-BR') : 'N/A'}</span>
                   </div>
                 </div>
               </div>
@@ -91,7 +244,7 @@ const Students = () => {
               <div className="student-card-footer">
                 <div className="emotional-quick-view">
                   <Activity size={16} color="var(--accent-color)" />
-                  <span>Humor: N/A</span>
+                  <span>Humor: {student.emotionalScore || 'N/A'}</span>
                 </div>
                 <button 
                   className="secondary-button"
@@ -131,4 +284,5 @@ const Students = () => {
     </div>
   );
 };
+
 export default Students;

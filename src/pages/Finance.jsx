@@ -94,13 +94,13 @@ const Finance = () => {
       {/* Cards de Métricas */}
       <div className="metrics-grid">
         <Card className="metric-card glow-card">
-          <div className="metric-icon"><DollarSign size={24} /></div>
+          <div className="metric-icon revenue-icon"><DollarSign size={24} /></div>
           <h3>Faturamento Mensal</h3>
           <p className="metric-value">{formatCurrency(totalRevenue)}</p>
         </Card>
         
-        <Card className="metric-card">
-          <div className="metric-icon"><TrendingUp size={24} color="var(--info)" /></div>
+        <Card className="metric-card glow-card-purple">
+          <div className="metric-icon ticket-icon"><TrendingUp size={24} /></div>
           <h3>Ticket Médio</h3>
           <p className="metric-value">{formatCurrency(averageTicket)}</p>
           <p className="metric-sub">por aluno ativo</p>

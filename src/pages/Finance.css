@@ -22,6 +22,12 @@
   box-shadow: 0 0 20px rgba(0, 240, 255, 0.05);
 }
 
+.glow-card-purple {
+  position: relative;
+  border-color: rgba(139, 92, 246, 0.3);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.05);
+}
+
 .metric-icon {
   width: 48px;
   height: 48px;
@@ -31,7 +37,20 @@
   align-items: center;
   justify-content: center;
   margin-bottom: 1rem;
+}
+
+.metric-icon.revenue-icon {
   color: var(--accent-color);
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
+}
+
+.metric-icon.ticket-icon {
+  color: var(--accent-secondary);
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.15);
 }
 
 .metric-card h3 {
