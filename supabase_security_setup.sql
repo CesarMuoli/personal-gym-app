@@ -156,7 +156,10 @@ DROP POLICY IF EXISTS "MultiTenant: Acesso aos proprios eventos" ON public.calen
 CREATE POLICY "MultiTenant: Acesso aos proprios eventos"
 ON public.calendar_events FOR ALL TO authenticated
 USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
+WITH CHECK (
+    auth.uid() = user_id AND 
+    (student_id IS NULL OR EXISTS (SELECT 1 FROM public.students s WHERE s.id = student_id AND s.user_id = auth.uid()))
+);
 
 -- Tabela: load_progression
 DROP POLICY IF EXISTS "Acesso restrito a autenticados em load_progression" ON public.load_progression;
@@ -164,7 +167,10 @@ DROP POLICY IF EXISTS "MultiTenant: Acesso as proprias cargas" ON public.load_pr
 CREATE POLICY "MultiTenant: Acesso as proprias cargas"
 ON public.load_progression FOR ALL TO authenticated
 USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
+WITH CHECK (
+    auth.uid() = user_id AND 
+    (student_id IS NULL OR EXISTS (SELECT 1 FROM public.students s WHERE s.id = student_id AND s.user_id = auth.uid()))
+);
 
 -- Tabela: emotional_history
 DROP POLICY IF EXISTS "Acesso restrito a autenticados em emotional_history" ON public.emotional_history;
@@ -172,7 +178,10 @@ DROP POLICY IF EXISTS "MultiTenant: Acesso aos proprios humores" ON public.emoti
 CREATE POLICY "MultiTenant: Acesso aos proprios humores"
 ON public.emotional_history FOR ALL TO authenticated
 USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
+WITH CHECK (
+    auth.uid() = user_id AND 
+    (student_id IS NULL OR EXISTS (SELECT 1 FROM public.students s WHERE s.id = student_id AND s.user_id = auth.uid()))
+);
 
 -- Tabela: financial_goals
 DROP POLICY IF EXISTS "Acesso restrito a autenticados em financial_goals" ON public.financial_goals;

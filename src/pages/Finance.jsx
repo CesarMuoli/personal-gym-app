@@ -3,6 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import Card from '../components/UI/Card';
 import Modal from '../components/UI/Modal';
 import { DollarSign, TrendingUp, Target, AlertCircle, CheckCircle2, Clock, Calendar as CalendarIcon, Check } from 'lucide-react';
+import { getLocalDateString } from '../utils/dateUtils';
 import './Finance.css';
 
 const Finance = () => {
@@ -64,7 +65,7 @@ const Finance = () => {
   };
 
   const handleQuickPay = async (student) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString();
     await updateStudentFinance(student.id, {
       last_payment_date: today
     });

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
+import { getLocalDateString } from '../utils/dateUtils';
 
 const AppContext = createContext();
 
@@ -183,7 +184,7 @@ export const AppProvider = ({ children }) => {
   };
 
   const addEmotionalScore = async (scoreData) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString();
     const payload = {
       student_id: scoreData.student_id,
       score: scoreData.score,
@@ -208,6 +209,7 @@ export const AppProvider = ({ children }) => {
     const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
     const fileExt = allowedExtensions.includes(rawExt) ? rawExt : 'jpg';
     const cleanFileName = `${userId}/${studentId}_${type}_${Date.now()}.${fileExt}`;
+    let targetFileName = cleanFileName;
     
     const { error: uploadError } = await supabase.storage
       .from('evaluations')
@@ -228,18 +230,19 @@ export const AppProvider = ({ children }) => {
         toast.error('Erro ao fazer upload da imagem.');
         return null;
       }
+      targetFileName = fallbackName;
     }
 
     // Gerar URL de acesso autenticado
     let photoUrl = '';
     const { data: signedData } = await supabase.storage
       .from('evaluations')
-      .createSignedUrl(cleanFileName, 60 * 60 * 24 * 365);
+      .createSignedUrl(targetFileName, 60 * 60 * 24 * 365);
 
     if (signedData?.signedUrl) {
       photoUrl = signedData.signedUrl;
     } else {
-      const { data: publicData } = supabase.storage.from('evaluations').getPublicUrl(cleanFileName);
+      const { data: publicData } = supabase.storage.from('evaluations').getPublicUrl(targetFileName);
       photoUrl = publicData.publicUrl;
     }
     

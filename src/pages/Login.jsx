@@ -31,9 +31,11 @@ const Login = () => {
     
     setLoading(true);
 
+    const cleanEmail = email.trim().toLowerCase();
+
     if (isSignUp) {
       // Cadastro de Novo Profissional (Multi-Tenant)
-      const { data, error } = await signUp(email, password);
+      const { data, error } = await signUp(cleanEmail, password);
       setLoading(false);
 
       if (error) {
@@ -49,7 +51,7 @@ const Login = () => {
       }
     } else {
       // Login Existente
-      const { error } = await signIn(email, password);
+      const { error } = await signIn(cleanEmail, password);
       setLoading(false);
       
       if (error) {

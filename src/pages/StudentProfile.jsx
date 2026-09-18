@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { useAppContext } from '../context/AppContext';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { User, Activity, Dumbbell, Ruler, ArrowLeft, TrendingUp, DollarSign, Plus } from 'lucide-react';
+import { getLocalDateString } from '../utils/dateUtils';
 import './StudentProfile.css';
 
 const StudentProfile = () => {
@@ -92,7 +93,7 @@ const StudentProfile = () => {
     await addEmotionalScore({
       student_id: student.id,
       score: emotionalScore,
-      record_date: new Date().toISOString().split('T')[0]
+      record_date: getLocalDateString()
     });
     setEmotionalScore(null);
   };
@@ -132,7 +133,7 @@ const StudentProfile = () => {
   };
 
   const handleMarkAsPaid = async () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString();
     await updateStudentFinance(student.id, {
       last_payment_date: today
     });

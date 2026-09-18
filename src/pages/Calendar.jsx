@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Card from '../components/UI/Card';
 import Modal from '../components/UI/Modal';
 import { useAppContext } from '../context/AppContext';
+import { getLocalDateString, formatDateKey } from '../utils/dateUtils';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -34,7 +35,7 @@ const Calendar = () => {
   // Form de agendamento
   const [formData, setFormData] = useState({
     title: '',
-    date: new Date().toISOString().split('T')[0],
+    date: getLocalDateString(),
     time: '10:00',
     type: 'class',
     student_id: ''
@@ -101,19 +102,14 @@ const Calendar = () => {
 
   const allCalendarDays = [...prevMonthDays, ...currentMonthDays, ...nextMonthDays];
 
-  // Helper para formatar data em string YYYY-MM-DD
-  const formatDateKey = (y, m, d) => {
-    const mStr = String(m + 1).padStart(2, '0');
-    const dStr = String(d).padStart(2, '0');
-    return `${y}-${mStr}-${dStr}`;
-  };
-
-  // Eventos mapeados por data
+  // Eventos mapeados por data no fuso local seguro
   const getEventsForDate = (y, m, d) => {
     const dateKey = formatDateKey(y, m, d);
     return calendarEvents.filter(event => {
       if (!event.event_date) return false;
-      const eDate = new Date(event.event_date).toISOString().split('T')[0];
+      const evDate = new Date(event.event_date);
+      if (isNaN(evDate.getTime())) return false;
+      const eDate = formatDateKey(evDate.getFullYear(), evDate.getMonth(), evDate.getDate());
       return eDate === dateKey;
     });
   };
@@ -158,7 +154,7 @@ const Calendar = () => {
     setIsModalOpen(false);
     setFormData({
       title: '',
-      date: new Date().toISOString().split('T')[0],
+      date: getLocalDateString(),
       time: '10:00',
       type: 'class',
       student_id: ''
