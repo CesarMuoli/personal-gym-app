@@ -12,11 +12,38 @@
   padding-bottom: 0;
 }
 
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
+  width: fit-content;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-bottom: 0.5rem;
+}
+
+.back-button:hover {
+  color: #fff;
+  background: rgba(0, 240, 255, 0.08);
+  border-color: rgba(0, 240, 255, 0.3);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
+  transform: translateX(-4px);
+}
+
 .icon-btn-transparent {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   color: var(--text-secondary);
+  white-space: nowrap;
   width: fit-content;
   cursor: pointer;
   background: none;

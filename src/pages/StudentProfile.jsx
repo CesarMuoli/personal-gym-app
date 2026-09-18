@@ -51,7 +51,12 @@ const StudentProfile = () => {
   const studentLoads = loadProgression.filter(l => String(l.student_id) === String(student.id));
   const exerciseLoads = studentLoads.filter(l => (l.exercise || '').toLowerCase() === loadFormData.exercise.toLowerCase());
   const chartLoads = exerciseLoads.length > 0 ? exerciseLoads : studentLoads;
-  const studentEmotions = emotionalHistory.filter(e => String(e.student_id) === String(student.id));
+  const studentEmotions = emotionalHistory
+    .filter(e => String(e.student_id) === String(student.id))
+    .map(e => ({
+      ...e,
+      displayDate: e.record_date ? new Date(e.record_date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : (e.date || '')
+    }));
 
   const handleAddLoad = async (e) => {
     e.preventDefault();
@@ -70,7 +75,7 @@ const StudentProfile = () => {
     await addEmotionalScore({
       student_id: student.id,
       score: emotionalScore,
-      date: new Date().toISOString().split('T')[0]
+      record_date: new Date().toISOString().split('T')[0]
     });
     setEmotionalScore(null);
   };
@@ -131,7 +136,10 @@ const StudentProfile = () => {
   return (
     <div className="profile-page fade-in-up">
       <header className="profile-header">
-        <button className="icon-btn-transparent" onClick={() => navigate('/students')}><ArrowLeft size={18} /> Voltar para Alunos</button>
+        <button className="back-button" onClick={() => navigate('/students')}>
+          <ArrowLeft size={18} />
+          <span>Voltar para Alunos</span>
+        </button>
         <div className="profile-info flex-between">
           <div className="profile-user">
             <img src={student.avatar || `https://i.pravatar.cc/150?u=${student.id}`} alt={student.name} className="profile-avatar" />
@@ -229,7 +237,7 @@ const StudentProfile = () => {
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={studentEmotions}>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                        <XAxis dataKey="date" stroke="var(--text-secondary)" />
+                        <XAxis dataKey="displayDate" stroke="var(--text-secondary)" />
                         <YAxis domain={[0, 15]} stroke="var(--text-secondary)" />
                         <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'white' }} />
                         <Line type="monotone" dataKey="score" stroke="var(--info)" strokeWidth={3} dot={{ r: 4, fill: 'var(--bg-card)', stroke: 'var(--info)', strokeWidth: 2 }} />

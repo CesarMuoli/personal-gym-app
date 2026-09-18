@@ -26,7 +26,12 @@ const PresentationMode = () => {
 
   // Filtragem isolada por aluno
   const studentLoads = loadProgression.filter(l => String(l.student_id) === String(student.id));
-  const studentEmotions = emotionalHistory.filter(e => String(e.student_id) === String(student.id));
+  const studentEmotions = emotionalHistory
+    .filter(e => String(e.student_id) === String(student.id))
+    .map(e => ({
+      ...e,
+      displayDate: e.record_date ? new Date(e.record_date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : (e.date || '')
+    }));
 
   // Média de humor
   const averageEmotional = studentEmotions.length > 0 
@@ -38,8 +43,9 @@ const PresentationMode = () => {
   return (
     <div className="presentation-page fade-in-up">
       <header className="presentation-header flex-between">
-        <button className="icon-btn-transparent" onClick={() => navigate(`/student/${student.id}`)}>
-          <ArrowLeft size={20} /> Voltar ao Perfil
+        <button className="back-button" onClick={() => navigate(`/student/${student.id}`)}>
+          <ArrowLeft size={18} />
+          <span>Voltar ao Perfil</span>
         </button>
         <div className="presentation-title">
           <h1>Evolução de Resultados</h1>
@@ -130,7 +136,7 @@ const PresentationMode = () => {
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={studentEmotions}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                    <XAxis dataKey="date" stroke="var(--text-secondary)" />
+                    <XAxis dataKey="displayDate" stroke="var(--text-secondary)" />
                     <YAxis domain={[0, 15]} stroke="var(--text-secondary)" hide />
                     <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'white' }} />
                     <Line type="monotone" dataKey="score" stroke="var(--info)" strokeWidth={4} dot={{ r: 5, fill: 'var(--bg-card)', stroke: 'var(--info)', strokeWidth: 2 }} />

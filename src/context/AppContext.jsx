@@ -123,8 +123,11 @@ export const AppProvider = ({ children }) => {
   };
 
   const addEmotionalScore = async (scoreData) => {
+    const today = new Date().toISOString().split('T')[0];
     const payload = {
-      ...scoreData,
+      student_id: scoreData.student_id,
+      score: scoreData.score,
+      record_date: scoreData.record_date || scoreData.date || today,
       user_id: session?.user?.id
     };
     const { data, error } = await supabase.from('emotional_history').insert([payload]).select();
@@ -134,7 +137,7 @@ export const AppProvider = ({ children }) => {
       return null;
     }
     setEmotionalHistory(prev => [...prev, data[0]]);
-    toast.success('Registro salvo com sucesso!');
+    toast.success('Registro de humor salvo com sucesso!');
     return data[0];
   };
 
