@@ -104,12 +104,13 @@ const Finance = () => {
   const monthlyGoalProgress = monthlyGoal > 0 ? (paidTotal / monthlyGoal) * 100 : 0;
   const monthlyGoalRemaining = Math.max(0, monthlyGoal - paidTotal);
 
-  // Estimativa Semestral (6 meses da carteira ativa)
-  const semiannualRevenueEstimate = totalRevenue * 6;
+  // Estimativa e Meta Semestral (Alinhada ao montante realizado)
   const semiannualGoal = Number(financialGoals?.quarterly_goal) || 0;
+  const semiannualRealized = paidTotal;
   const semiannualGoalProgress = semiannualGoal > 0 
-    ? (semiannualRevenueEstimate / semiannualGoal) * 100 
+    ? (semiannualRealized / semiannualGoal) * 100 
     : 0;
+  const semiannualGoalRemaining = Math.max(0, semiannualGoal - semiannualRealized);
 
   const handleQuickPay = async (student) => {
     const today = getLocalDateString();
@@ -256,8 +257,14 @@ const Finance = () => {
             />
           </div>
           <div className="flex-between metric-sub-row">
-            <p className="metric-sub">Projeção: <strong>{semiannualGoalProgress.toFixed(1)}%</strong></p>
-            <p className="metric-sub">Est. Semestre: <strong>{formatCurrency(semiannualRevenueEstimate)}</strong></p>
+            <p className="metric-sub">Progresso: <strong>{semiannualGoalProgress.toFixed(1)}%</strong> ({formatCurrency(semiannualRealized)})</p>
+            <p className="metric-sub">
+              {semiannualGoalProgress >= 100 ? (
+                <span className="goal-reached-text">Meta Atingida! 🚀</span>
+              ) : (
+                `Falta ${formatCurrency(semiannualGoalRemaining)}`
+              )}
+            </p>
           </div>
         </Card>
       </div>
@@ -448,11 +455,31 @@ const Finance = () => {
         <form onSubmit={handleSaveGoals}>
           <div className="form-group">
             <label>Meta Mensal (R$)</label>
-            <input required type="number" className="form-input" value={goalsForm.monthly_goal} onChange={e => setGoalsForm({...goalsForm, monthly_goal: e.target.value})} />
+            <input 
+              required 
+              type="number" 
+              className="form-input" 
+              value={goalsForm.monthly_goal} 
+              onChange={e => setGoalsForm({...goalsForm, monthly_goal: e.target.value})} 
+              placeholder="Ex: 5000"
+            />
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem', display: 'block' }}>
+              Alvo de receita a arrecadar dentro do mês vigente (Receita atual: {formatCurrency(paidTotal)})
+            </span>
           </div>
           <div className="form-group">
             <label>Meta Semestral (R$)</label>
-            <input required type="number" className="form-input" value={goalsForm.quarterly_goal} onChange={e => setGoalsForm({...goalsForm, quarterly_goal: e.target.value})} />
+            <input 
+              required 
+              type="number" 
+              className="form-input" 
+              value={goalsForm.quarterly_goal} 
+              onChange={e => setGoalsForm({...goalsForm, quarterly_goal: e.target.value})} 
+              placeholder="Ex: 25000"
+            />
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem', display: 'block' }}>
+              Alvo de receita acumulada para o semestre ({semesterTag})
+            </span>
           </div>
           <button type="submit" className="primary-button" style={{ width: '100%', marginTop: '1rem', justifyContent: 'center' }}>Salvar Metas</button>
         </form>
