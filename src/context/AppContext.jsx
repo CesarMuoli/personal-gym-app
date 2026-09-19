@@ -34,10 +34,10 @@ export const AppProvider = ({ children }) => {
     setLoading(true);
     try {
       const [studentsRes, eventsRes, loadRes, emotionalRes, goalsRes] = await Promise.all([
-        supabase.from('students').select('*').order('created_at', { ascending: false }),
-        supabase.from('calendar_events').select('*').order('event_date', { ascending: true }),
-        supabase.from('load_progression').select('*').order('created_at', { ascending: true }),
-        supabase.from('emotional_history').select('*').order('record_date', { ascending: true }),
+        supabase.from('students').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false }),
+        supabase.from('calendar_events').select('*').eq('user_id', session.user.id).order('event_date', { ascending: true }),
+        supabase.from('load_progression').select('*').eq('user_id', session.user.id).order('created_at', { ascending: true }),
+        supabase.from('emotional_history').select('*').eq('user_id', session.user.id).order('record_date', { ascending: true }),
         supabase.from('financial_goals').select('*').eq('user_id', session.user.id).maybeSingle()
       ]);
 
@@ -49,9 +49,7 @@ export const AppProvider = ({ children }) => {
       if (goalsRes.data) {
         setFinancialGoals(goalsRes.data);
       } else {
-        // Fallback para usuário que ainda não tem registro específico
-        const { data: legacyGoal } = await supabase.from('financial_goals').select('*').eq('id', 1).maybeSingle();
-        if (legacyGoal) setFinancialGoals(legacyGoal);
+        setFinancialGoals({ monthly_goal: 0, quarterly_goal: 0 });
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -107,6 +105,7 @@ export const AppProvider = ({ children }) => {
       .from('students')
       .update(studentData)
       .eq('id', studentId)
+      .eq('user_id', session?.user?.id)
       .select();
     if (error) {
       console.error('Erro ao atualizar aluno:', error);
@@ -122,7 +121,8 @@ export const AppProvider = ({ children }) => {
     const { error } = await supabase
       .from('students')
       .delete()
-      .eq('id', studentId);
+      .eq('id', studentId)
+      .eq('user_id', session?.user?.id);
     if (error) {
       console.error('Erro ao excluir aluno:', error);
       toast.error('Erro ao excluir aluno.');
@@ -156,7 +156,8 @@ export const AppProvider = ({ children }) => {
     const { error } = await supabase
       .from('calendar_events')
       .delete()
-      .eq('id', eventId);
+      .eq('id', eventId)
+      .eq('user_id', session?.user?.id);
     if (error) {
       console.error('Erro ao excluir evento:', error);
       toast.error('Erro ao cancelar agendamento.');
@@ -271,7 +272,8 @@ export const AppProvider = ({ children }) => {
     const { error } = await supabase
       .from('students')
       .update(financeData)
-      .eq('id', studentId);
+      .eq('id', studentId)
+      .eq('user_id', session?.user?.id);
       
     if (error) {
       console.error('Update finance error:', error);
@@ -294,17 +296,9 @@ export const AppProvider = ({ children }) => {
       updated_at: new Date().toISOString()
     };
 
-    // Tentar upsert com conflito em user_id (multi-tenant)
-    let { error } = await supabase
+    const { error } = await supabase
       .from('financial_goals')
       .upsert(payload, { onConflict: 'user_id' });
-      
-    if (error) {
-      // Fallback para schemas legados onde id=1 é a PK
-      const legacyPayload = { id: 1, ...payload };
-      const res = await supabase.from('financial_goals').upsert(legacyPayload);
-      error = res.error;
-    }
 
     if (error) {
       console.error('Update goals error:', error);

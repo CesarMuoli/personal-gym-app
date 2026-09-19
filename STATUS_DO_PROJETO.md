@@ -1,16 +1,23 @@
 # 📋 PersonalGYM - Status do Projeto & Guia de Retomada
 
-> **Data de Atualização:** 18 de Setembro de 2026  
-> **Status Atual:** 🟢 100% Funcional, Blindado, Compilando com 0 Erros e Sincronizado no GitHub  
+> **Data de Atualização:** 19 de Setembro de 2026  
+> **Status Atual:** 🟢 100% Funcional, Blindado, Compilando com 0 Erros e Totalmente Auditado  
 > **Repositório:** [https://github.com/CesarMuoli/personal-gym-app](https://github.com/CesarMuoli/personal-gym-app) (Branch: `main`)
 
 ---
 
 ## 📍 1. Onde Paramos Exatamente?
 
-O projeto atingiu o padrão **10/10** em funcionalidades, arquitetura de segurança e refinamento visual. As duas últimas grandes entregas realizadas com base nos feedbacks do cliente foram:
+O projeto passou por uma **auditoria completa de ponta a ponta** e refinamento fino em 19/09/2026, consolidando:
 
-1. **Reformulação Total do Módulo Financeiro:**
+1. **Auditoria & Blindagem de Edge Cases:**
+   - **Correção de Loading no F5:** As telas [StudentProfile.jsx](file:///c:/Projetos/antigravity/personal-gym/src/pages/StudentProfile.jsx), [PresentationMode.jsx](file:///c:/Projetos/antigravity/personal-gym/src/pages/PresentationMode.jsx) e [Finance.jsx](file:///c:/Projetos/antigravity/personal-gym/src/pages/Finance.jsx) agora respeitam a flag `loading`, prevenindo o falso aviso de "Aluno não encontrado" e o flash de valores zerados antes da resposta do Supabase.
+   - **Média Real no Dashboard:** O gráfico geral em [Dashboard.jsx](file:///c:/Projetos/antigravity/personal-gym/src/pages/Dashboard.jsx) agora agrupa múltiplos registros de humor pela mesma data e calcula a média diária real (com contagem no tooltip), eliminando repetição de datas no eixo X.
+   - **Reversão de Baixa Financeira:** Adicionado o botão `Desfazer` na coluna *Pagos no Mês* em [Finance.jsx](file:///c:/Projetos/antigravity/personal-gym/src/pages/Finance.jsx) e a opção de desfazer baixa no perfil do aluno em [StudentProfile.jsx](file:///c:/Projetos/antigravity/personal-gym/src/pages/StudentProfile.jsx), permitindo reverter pagamentos registrados por engano.
+   - **Resolução de Alertas do Linter:** Removidos efeitos colaterais de `set-state-in-effect` no Modo Apresentação e limpos imports e variáveis órfãs (`MoreVertical`, `y` e o arquivo legado `mockData.js`).
+   - **Parser Seguro de Datas:** Sanitização de strings com `.split('T')[0]` antes de montar datas locais nos históricos emocionais.
+
+2. **Reformulação Total do Módulo Financeiro:**
    - Eliminação da duplicidade de cards: agora são **3 colunas canônicas amplas** organizadas na ordem psicológica ideal:
      1. 🟢 **Pagos no Mês** (o que o personal já ganhou, coluna da esquerda)
      2. 🔵 **A Vencer** (previsões de receita com tags inteligentes: *Vence Hoje*, *Vence em 2d*, *Vence dia DD*)
@@ -20,7 +27,7 @@ O projeto atingiu o padrão **10/10** em funcionalidades, arquitetura de seguran
      - `⏳ Faltam Y dias no trimestre (Q3)`
    - **Cores Tech Neon Distintas:** Faturamento (Cyan Neon), Ticket Médio (Cyber Purple), Meta Mensal (Emerald Green) e Meta Trimestral (Solar Amber).
 
-2. **Reformulação da Escala Emocional Pós-Treino:**
+3. **Reformulação da Escala Emocional Pós-Treino:**
    - Migração da escala confusa de 0 a 15 para o padrão ouro de **0 a 10**.
    - **Bolinhas com Preenchimento Líquido Progressivo:**
      - **0:** Bolinha **100% vazia** (apenas o contorno circular discreto).

@@ -13,7 +13,7 @@ import './StudentProfile.css';
 const StudentProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { students, loadProgression, emotionalHistory, addLoad, addEmotionalScore, uploadEvaluationPhoto, updateStudentFinance } = useAppContext();
+  const { students, loadProgression, emotionalHistory, addLoad, addEmotionalScore, uploadEvaluationPhoto, updateStudentFinance, loading } = useAppContext();
   
   const [activeTab, setActiveTab] = useState('overview');
   const [emotionalScore, setEmotionalScore] = useState(null);
@@ -36,6 +36,14 @@ const StudentProfile = () => {
       monthly_fee: student.monthly_fee || 0,
       due_date: student.due_date || 10
     });
+  }
+
+  if (loading) {
+    return (
+      <div className="profile-page flex-center" style={{ minHeight: '80vh', flexDirection: 'column', gap: '1rem', color: 'var(--text-secondary)' }}>
+        <p>Carregando perfil do aluno...</p>
+      </div>
+    );
   }
 
   if (!student) {
@@ -67,10 +75,15 @@ const StudentProfile = () => {
 
   const studentEmotions = emotionalHistory
     .filter(e => String(e.student_id) === String(student.id))
-    .map(e => ({
-      ...e,
-      displayDate: e.record_date ? new Date(e.record_date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : (e.date || '')
-    }));
+    .map(e => {
+      const cleanDate = e.record_date ? (e.record_date.includes('T') ? e.record_date.split('T')[0] : e.record_date) : '';
+      return {
+        ...e,
+        displayDate: cleanDate 
+          ? new Date(cleanDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) 
+          : (e.date || '')
+      };
+    });
 
   const latestEmotion = studentEmotions.length > 0 ? studentEmotions[studentEmotions.length - 1] : null;
   const latestEmotionalScore = latestEmotion ? `${latestEmotion.score}/10` : (student.emotionalScore ? `${student.emotionalScore}/10` : 'Sem registros');
@@ -106,17 +119,20 @@ const StudentProfile = () => {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
       toast.error('Formato inválido. Use apenas fotos JPG, PNG ou WEBP.');
+      e.target.value = '';
       return;
     }
 
     const maxBytes = 5 * 1024 * 1024; // 5 MB
     if (file.size > maxBytes) {
       toast.error('Arquivo muito pesado. O limite máximo é de 5MB.');
+      e.target.value = '';
       return;
     }
     
     toast.loading(`Enviando foto de ${type === 'before' ? 'Antes' : 'Depois'}...`, { id: 'upload' });
     const url = await uploadEvaluationPhoto(student.id, type, file);
+    e.target.value = '';
     if (url) {
       toast.success('Foto enviada com sucesso!', { id: 'upload' });
     } else {
@@ -132,11 +148,31 @@ const StudentProfile = () => {
     });
   };
 
+  const isPaidThisMonth = () => {
+    if (!student?.last_payment_date) return false;
+    try {
+      const clean = student.last_payment_date.includes('T') ? student.last_payment_date.split('T')[0] : String(student.last_payment_date);
+      const [y, m] = clean.split('-').map(Number);
+      const now = new Date();
+      return y === now.getFullYear() && m === now.getMonth() + 1;
+    } catch {
+      return false;
+    }
+  };
+
   const handleMarkAsPaid = async () => {
     const today = getLocalDateString();
     await updateStudentFinance(student.id, {
       last_payment_date: today
     });
+  };
+
+  const handleUndoPayment = async () => {
+    if (window.confirm('Deseja cancelar o registro de pagamento deste mês para este aluno?')) {
+      await updateStudentFinance(student.id, {
+        last_payment_date: null
+      });
+    }
   };
 
   const formatPaymentDate = (dateStr) => {
@@ -367,9 +403,25 @@ const StudentProfile = () => {
               <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
                 Último pagamento registrado: <strong>{formatPaymentDate(student.last_payment_date)}</strong>
               </p>
-              <button className="primary-button" style={{ backgroundColor: 'var(--success)' }} onClick={handleMarkAsPaid}>
-                Marcar como Pago neste mês
-              </button>
+              {isPaidThisMonth() ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                  <span style={{ color: 'var(--success)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    ✓ Mensalidade quitada neste mês
+                  </span>
+                  <button 
+                    type="button" 
+                    className="secondary-button" 
+                    style={{ fontSize: '0.85rem', padding: '0.45rem 0.9rem', color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.3)' }} 
+                    onClick={handleUndoPayment}
+                  >
+                    Desfazer Baixa
+                  </button>
+                </div>
+              ) : (
+                <button className="primary-button" style={{ backgroundColor: 'var(--success)' }} onClick={handleMarkAsPaid}>
+                  Marcar como Pago neste mês
+                </button>
+              )}
             </Card>
           </div>
         )}

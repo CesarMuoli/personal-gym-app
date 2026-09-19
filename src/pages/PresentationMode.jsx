@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Card from '../components/UI/Card';
 import { useAppContext } from '../context/AppContext';
@@ -9,23 +9,29 @@ import './PresentationMode.css';
 const PresentationMode = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { students, loadProgression, emotionalHistory } = useAppContext();
+  const { students, loadProgression, emotionalHistory, loading } = useAppContext();
 
   const student = students.find(s => String(s.id) === String(id));
 
   // Filtragem isolada por aluno
   const studentLoads = loadProgression.filter(l => String(l.student_id) === String(student?.id));
   const availableExercises = Array.from(new Set(studentLoads.map(l => l.exercise).filter(Boolean)));
-  const defaultExercise = availableExercises.length > 0 ? availableExercises[0] : 'Supino Reto';
-  const [selectedExercise, setSelectedExercise] = useState(defaultExercise);
-
-  useEffect(() => {
-    if (availableExercises.length > 0 && !availableExercises.includes(selectedExercise)) {
-      setSelectedExercise(availableExercises[0]);
-    }
-  }, [loadProgression]);
+  const [selectedExerciseState, setSelectedExerciseState] = useState('');
+  
+  // Exercício selecionado derivado de forma declarativa (sem necessidade de useEffect com setState)
+  const selectedExercise = (selectedExerciseState && availableExercises.includes(selectedExerciseState))
+    ? selectedExerciseState
+    : (availableExercises[0] || 'Supino Reto');
 
   const chartLoads = studentLoads.filter(l => (l.exercise || '').toLowerCase() === selectedExercise.toLowerCase());
+
+  if (loading) {
+    return (
+      <div className="presentation-page flex-center" style={{ minHeight: '80vh', flexDirection: 'column', gap: '1rem', color: 'var(--text-secondary)' }}>
+        <p>Carregando apresentação do aluno...</p>
+      </div>
+    );
+  }
 
   if (!student) {
     return (
@@ -40,10 +46,15 @@ const PresentationMode = () => {
 
   const studentEmotions = emotionalHistory
     .filter(e => String(e.student_id) === String(student.id))
-    .map(e => ({
-      ...e,
-      displayDate: e.record_date ? new Date(e.record_date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : (e.date || '')
-    }));
+    .map(e => {
+      const cleanDate = e.record_date ? (e.record_date.includes('T') ? e.record_date.split('T')[0] : e.record_date) : '';
+      return {
+        ...e,
+        displayDate: cleanDate 
+          ? new Date(cleanDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) 
+          : (e.date || '')
+      };
+    });
 
   // Média de humor
   const averageEmotional = studentEmotions.length > 0 
@@ -128,7 +139,7 @@ const PresentationMode = () => {
                     className="form-input" 
                     style={{ padding: '0.25rem 0.6rem', fontSize: '0.8rem', width: 'auto', minWidth: '150px' }}
                     value={selectedExercise}
-                    onChange={(e) => setSelectedExercise(e.target.value)}
+                    onChange={(e) => setSelectedExerciseState(e.target.value)}
                   >
                     {availableExercises.map(ex => (
                       <option key={ex} value={ex}>{ex}</option>

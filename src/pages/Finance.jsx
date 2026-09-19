@@ -19,7 +19,7 @@ import { getLocalDateString } from '../utils/dateUtils';
 import './Finance.css';
 
 const Finance = () => {
-  const { students, financialGoals, updateFinancialGoals, updateStudentFinance } = useAppContext();
+  const { students, financialGoals, updateFinancialGoals, updateStudentFinance, loading } = useAppContext();
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [goalsForm, setGoalsForm] = useState({
     monthly_goal: financialGoals?.monthly_goal || 0,
@@ -32,26 +32,34 @@ const Finance = () => {
   const averageTicket = activeStudents.length > 0 ? totalRevenue / activeStudents.length : 0;
   
   const monthlyGoalProgress = financialGoals?.monthly_goal > 0 ? (totalRevenue / financialGoals.monthly_goal) * 100 : 0;
-  const quarterlyRevenueEstimate = totalRevenue * 3;
-  const quarterlyGoalProgress = financialGoals?.quarterly_goal > 0 ? (quarterlyRevenueEstimate / financialGoals.quarterly_goal) * 100 : 0;
 
   // Lógica de Datas e Prazos
   const todayDate = new Date();
-  const currentMonth = todayDate.getMonth();
+  const currentMonth = todayDate.getMonth(); // 0 a 11 (Jan=0, Set=8, Dez=11)
   const currentYear = todayDate.getFullYear();
   const currentDay = todayDate.getDate();
 
-  // Contagem de dias restantes para o fechamento do mês
+  // Contagem exata de dias restantes para o fechamento do mês
   const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const daysRemainingMonth = Math.max(0, lastDayOfMonth - currentDay);
 
-  // Contagem de dias restantes no trimestre atual
-  const currentQuarter = Math.floor(currentMonth / 3); // 0 (Q1), 1 (Q2), 2 (Q3), 3 (Q4)
-  const quarterEndMonth = (currentQuarter + 1) * 3 - 1;
-  const quarterEndDate = new Date(currentYear, quarterEndMonth + 1, 0, 23, 59, 59);
-  const diffTime = quarterEndDate.getTime() - todayDate.getTime();
-  const daysRemainingQuarter = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-  const quarterName = `Q${currentQuarter + 1}`;
+  // Semestre Vigente (1º Semestre: Jan-Jun | 2º Semestre: Jul-Dez)
+  const currentSemester = currentMonth < 6 ? 1 : 2;
+  const semesterEndMonth = currentSemester === 1 ? 5 : 11; // Junho (5) ou Dezembro (11)
+  const lastDayOfSemester = new Date(currentYear, semesterEndMonth + 1, 0).getDate();
+  
+  // Contagem exata e normalizada de dias até o término do semestre
+  const todayStart = new Date(currentYear, currentMonth, currentDay);
+  const semesterEndStart = new Date(currentYear, semesterEndMonth, lastDayOfSemester);
+  const daysRemainingSemester = Math.max(0, Math.round((semesterEndStart - todayStart) / (1000 * 60 * 60 * 24)));
+  const semesterTag = currentSemester === 1 ? 'S1' : 'S2';
+  const semesterFullName = `${currentSemester}º Semestre (${semesterTag})`;
+
+  // Estimativa Semestral (6 meses de faturamento dos alunos ativos)
+  const semiannualRevenueEstimate = totalRevenue * 6;
+  const semiannualGoalProgress = financialGoals?.quarterly_goal > 0 
+    ? (semiannualRevenueEstimate / financialGoals.quarterly_goal) * 100 
+    : 0;
 
   // Classificação Canônica em 3 Grupos (Sem duplicidade)
   const getPaymentStatus = (student) => {
@@ -97,6 +105,14 @@ const Finance = () => {
     });
   };
 
+  const handleUndoPay = async (student) => {
+    if (window.confirm(`Deseja desfazer a baixa do pagamento deste mês para "${student.name}"?`)) {
+      await updateStudentFinance(student.id, {
+        last_payment_date: null
+      });
+    }
+  };
+
   const handleSaveGoals = async (e) => {
     e.preventDefault();
     await updateFinancialGoals({
@@ -114,13 +130,21 @@ const Finance = () => {
     if (!dateStr) return '';
     try {
       const clean = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
-      const [y, m, d] = clean.split('-');
+      const [, m, d] = clean.split('-');
       if (d && m) return `em ${d}/${m}`;
       return '';
     } catch {
       return '';
     }
   };
+
+  if (loading) {
+    return (
+      <div className="finance-page flex-center" style={{ minHeight: '80vh', flexDirection: 'column', gap: '1rem', color: 'var(--text-secondary)' }}>
+        <p>Carregando dados financeiros...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="finance-page fade-in-up">
@@ -195,7 +219,7 @@ const Finance = () => {
           </div>
         </Card>
 
-        {/* 4. Meta Trimestral (Gold / Amber Neon + Timer) */}
+        {/* 4. Meta Semestral (Gold / Amber Neon + Timer) */}
         <Card className="metric-card progress-card glow-card-amber">
           <div className="flex-between metric-header-flex">
             <div className="metric-header-left">
@@ -203,24 +227,24 @@ const Finance = () => {
                 <Target size={22} />
               </div>
               <div>
-                <h3>Meta Trimestral ({quarterName})</h3>
+                <h3>Meta Semestral ({semesterTag})</h3>
                 <span className="goal-target">Alvo: {formatCurrency(financialGoals?.quarterly_goal || 0)}</span>
               </div>
             </div>
-            <div className="goal-timer-badge amber" title="Dias restantes para encerrar o trimestre">
+            <div className="goal-timer-badge amber" title={`Dias restantes para encerrar o ${semesterFullName}`}>
               <Hourglass size={13} />
-              <span>{daysRemainingQuarter === 0 ? 'Fim do tri!' : `Faltam ${daysRemainingQuarter} dias`}</span>
+              <span>{daysRemainingSemester === 0 ? 'Fim do semestre!' : `Faltam ${daysRemainingSemester} dias`}</span>
             </div>
           </div>
           <div className="progress-bar-bg">
             <div 
               className="progress-bar-fill progress-fill-amber" 
-              style={{ width: `${Math.min(quarterlyGoalProgress, 100)}%` }}
+              style={{ width: `${Math.min(semiannualGoalProgress, 100)}%` }}
             />
           </div>
           <div className="flex-between metric-sub-row">
-            <p className="metric-sub">Projeção: <strong>{quarterlyGoalProgress.toFixed(1)}%</strong></p>
-            <p className="metric-sub">Est. Tri: <strong>{formatCurrency(quarterlyRevenueEstimate)}</strong></p>
+            <p className="metric-sub">Projeção: <strong>{semiannualGoalProgress.toFixed(1)}%</strong></p>
+            <p className="metric-sub">Est. Semestre: <strong>{formatCurrency(semiannualRevenueEstimate)}</strong></p>
           </div>
         </Card>
       </div>
@@ -267,9 +291,18 @@ const Finance = () => {
                       <span>{formatCurrency(s.monthly_fee)} • {formatPaidDate(s.last_payment_date)}</span>
                     </div>
                   </div>
-                  <span className="paid-tag-status">
-                    <CheckCircle2 size={14} /> Pago
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span className="paid-tag-status">
+                      <CheckCircle2 size={14} /> Pago
+                    </span>
+                    <button 
+                      className="quick-pay-btn quick-pay-undo" 
+                      title="Desfazer baixa deste pagamento"
+                      onClick={() => handleUndoPay(s)}
+                    >
+                      Desfazer
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -405,7 +438,7 @@ const Finance = () => {
             <input required type="number" className="form-input" value={goalsForm.monthly_goal} onChange={e => setGoalsForm({...goalsForm, monthly_goal: e.target.value})} />
           </div>
           <div className="form-group">
-            <label>Meta Trimestral (R$)</label>
+            <label>Meta Semestral (R$)</label>
             <input required type="number" className="form-input" value={goalsForm.quarterly_goal} onChange={e => setGoalsForm({...goalsForm, quarterly_goal: e.target.value})} />
           </div>
           <button type="submit" className="primary-button" style={{ width: '100%', marginTop: '1rem', justifyContent: 'center' }}>Salvar Metas</button>

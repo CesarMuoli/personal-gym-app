@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, Calendar, AlertCircle } from 'lucide-react';
 import Card from '../components/UI/Card';
 import { useAppContext } from '../context/AppContext';
@@ -6,6 +7,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import './Dashboard.css';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const { students, calendarEvents, emotionalHistory, loading } = useAppContext();
 
   if (loading) return <div style={{ padding: '2rem' }}>Carregando dados...</div>;
@@ -26,21 +28,35 @@ const Dashboard = () => {
     return e.event_date ? new Date(e.event_date).getTime() >= nowTimestamp : false;
   }).length;
 
-  // Formatação segura de datas para o gráfico geral de humor
-  const formattedEmotions = emotionalHistory.map(e => {
-    const rawDate = e.record_date || e.date || '';
-    let displayDate = rawDate;
-    if (rawDate && rawDate.includes('-')) {
-      const parts = rawDate.split('T')[0].split('-');
-      if (parts.length === 3) {
-        displayDate = `${parts[2]}/${parts[1]}`;
-      }
+  // Agrupamento por data e cálculo da média real diária para o gráfico geral
+  const emotionsByDate = emotionalHistory.reduce((acc, curr) => {
+    const rawDate = curr.record_date || curr.date || '';
+    if (!rawDate) return acc;
+    const dateKey = rawDate.includes('T') ? rawDate.split('T')[0] : rawDate;
+    const scoreVal = Number(curr.score) || 0;
+    
+    if (!acc[dateKey]) {
+      acc[dateKey] = { total: scoreVal, count: 1, dateKey };
+    } else {
+      acc[dateKey].total += scoreVal;
+      acc[dateKey].count += 1;
     }
-    return {
-      ...e,
-      displayDate
-    };
-  });
+    return acc;
+  }, {});
+
+  const formattedEmotions = Object.values(emotionsByDate)
+    .sort((a, b) => a.dateKey.localeCompare(b.dateKey))
+    .map(item => {
+      const avgScore = Number((item.total / item.count).toFixed(1));
+      const parts = item.dateKey.split('-');
+      const displayDate = parts.length === 3 ? `${parts[2]}/${parts[1]}` : item.dateKey;
+      return {
+        dateKey: item.dateKey,
+        displayDate,
+        score: avgScore,
+        count: item.count
+      };
+    });
 
   return (
     <div className="dashboard-page fade-in-up">
@@ -52,7 +68,11 @@ const Dashboard = () => {
       </header>
 
       <div className="stats-grid">
-        <Card className="stat-card">
+        <Card 
+          className="stat-card clickable" 
+          onClick={() => navigate('/students')}
+          aria-label="Clique para ir para Gestão de Alunos"
+        >
           <div className="stat-icon" style={{ backgroundColor: 'rgba(139, 92, 246, 0.2)', color: 'var(--accent-color)' }}>
             <Users size={24} />
           </div>
@@ -60,9 +80,14 @@ const Dashboard = () => {
             <span className="stat-value">{activeStudents}</span>
             <span className="stat-label">Alunos Ativos</span>
           </div>
+          <span className="stat-card-hint">Acessar →</span>
         </Card>
 
-        <Card className="stat-card">
+        <Card 
+          className="stat-card clickable" 
+          onClick={() => navigate('/calendar')}
+          aria-label="Clique para abrir a Agenda"
+        >
           <div className="stat-icon" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: 'var(--success)' }}>
             <Calendar size={24} />
           </div>
@@ -70,9 +95,14 @@ const Dashboard = () => {
             <span className="stat-value">{todaysClasses}</span>
             <span className="stat-label">Aulas Hoje</span>
           </div>
+          <span className="stat-card-hint">Agenda →</span>
         </Card>
 
-        <Card className="stat-card">
+        <Card 
+          className="stat-card clickable" 
+          onClick={() => navigate('/calendar')}
+          aria-label="Clique para ver Avaliações na Agenda"
+        >
           <div className="stat-icon" style={{ backgroundColor: 'rgba(245, 158, 11, 0.2)', color: 'var(--warning)' }}>
             <AlertCircle size={24} />
           </div>
@@ -80,6 +110,7 @@ const Dashboard = () => {
             <span className="stat-value">{pendingAssessments}</span>
             <span className="stat-label">Avaliações Pendentes</span>
           </div>
+          <span className="stat-card-hint">Agenda →</span>
         </Card>
       </div>
 
@@ -99,6 +130,11 @@ const Dashboard = () => {
                     <YAxis domain={[0, 10]} ticks={[0, 2, 4, 6, 8, 10]} stroke="var(--text-secondary)" axisLine={false} tickLine={false} dx={-10} />
                     <Tooltip 
                       contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', borderRadius: '8px', color: 'white' }}
+                      formatter={(value, _name, item) => [
+                        `${value}/10 ${item.payload?.count > 1 ? `(${item.payload.count} registros)` : ''}`, 
+                        'Média Diária'
+                      ]}
+                      labelFormatter={(label) => `Dia: ${label}`}
                     />
                     <Line type="monotone" dataKey="score" stroke="var(--accent-color)" strokeWidth={3} dot={{ r: 4, fill: 'var(--bg-card)', stroke: 'var(--accent-color)', strokeWidth: 2 }} activeDot={{ r: 6 }} />
                   </LineChart>

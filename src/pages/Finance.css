@@ -501,6 +501,23 @@
   box-shadow: 0 0 14px rgba(16, 185, 129, 0.5);
 }
 
+.quick-pay-btn.quick-pay-undo {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  padding: 0.3rem 0.6rem;
+  opacity: 0.85;
+}
+
+.quick-pay-btn.quick-pay-undo:hover {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ff6b6b;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+  transform: translateY(-1px);
+}
+
 /* Tag de Pago Confirmado */
 .paid-tag-status {
   display: inline-flex;

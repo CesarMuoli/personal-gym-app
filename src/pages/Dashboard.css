@@ -34,6 +34,41 @@
   flex-direction: row;
   align-items: center;
   gap: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card.clickable {
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.stat-card.clickable:hover {
+  transform: translateY(-4px);
+  border-color: rgba(0, 240, 255, 0.35);
+  box-shadow: 0 10px 30px rgba(0, 240, 255, 0.12);
+}
+
+.stat-card.clickable:active {
+  transform: scale(0.97);
+}
+
+.stat-card-hint {
+  position: absolute;
+  right: 1.25rem;
+  bottom: 0.85rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent-color);
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+
+.stat-card.clickable:hover .stat-card-hint {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .stat-icon {
