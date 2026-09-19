@@ -284,6 +284,20 @@
   box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
 }
 
+.student-action-btn.whatsapp {
+  color: #25d366;
+  border-color: rgba(37, 211, 102, 0.25);
+  background: rgba(37, 211, 102, 0.08);
+}
+
+.student-action-btn.whatsapp:hover {
+  background: rgba(37, 211, 102, 0.25);
+  color: #25d366;
+  border-color: #25d366;
+  box-shadow: 0 0 10px rgba(37, 211, 102, 0.35);
+  transform: translateY(-2px);
+}
+
 .student-action-btn.delete:hover {
   color: var(--danger);
   border-color: rgba(239, 68, 68, 0.3);

@@ -66,12 +66,173 @@
   gap: 1.5rem;
 }
 
+/* Avatar Container & Upload Overlay */
+.profile-avatar-container {
+  position: relative;
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 .profile-avatar {
-  width: 80px;
-  height: 80px;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   object-fit: cover;
   border: 3px solid var(--accent-color);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.25);
+  transition: all 0.3s ease;
+}
+
+.avatar-upload-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(5, 5, 10, 0.75);
+  backdrop-filter: blur(3px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--accent-color);
+  font-size: 0.7rem;
+  font-weight: 600;
+  opacity: 0;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  border: 2px dashed rgba(0, 240, 255, 0.6);
+}
+
+.profile-avatar-container:hover .avatar-upload-overlay {
+  opacity: 1;
+}
+
+.avatar-upload-overlay.uploading {
+  opacity: 1;
+  background: rgba(5, 5, 10, 0.85);
+}
+
+.profile-user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.profile-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.status-pill {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-pill.active {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-pill.inactive {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* WhatsApp Link ao lado da foto */
+.profile-contact-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.profile-whatsapp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, rgba(37, 211, 102, 0.15) 0%, rgba(18, 140, 126, 0.25) 100%);
+  border: 1px solid rgba(37, 211, 102, 0.45);
+  color: #25d366;
+  padding: 0.45rem 0.9rem;
+  border-radius: 9999px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 2px 10px rgba(37, 211, 102, 0.15);
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+
+.profile-whatsapp-btn:hover {
+  background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+  color: #05050a;
+  box-shadow: 0 4px 18px rgba(37, 211, 102, 0.45);
+  transform: translateY(-2px);
+  border-color: #25d366;
+}
+
+.profile-whatsapp-btn:hover .whatsapp-icon {
+  transform: scale(1.1);
+}
+
+.profile-whatsapp-btn.unlinked {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+  color: var(--text-secondary);
+  box-shadow: none;
+}
+
+.profile-whatsapp-btn.unlinked:hover {
+  background: rgba(37, 211, 102, 0.15);
+  border-color: #25d366;
+  color: #25d366;
+  transform: translateY(-2px);
+}
+
+.whatsapp-label {
+  opacity: 0.85;
+  font-weight: 500;
+}
+
+.whatsapp-number {
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.whatsapp-icon {
+  transition: transform 0.2s ease;
+}
+
+.quick-edit-phone-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.quick-edit-phone-btn:hover {
+  background: rgba(0, 240, 255, 0.15);
+  color: var(--accent-color);
+  border-color: var(--accent-color);
 }
 
 .primary-button {

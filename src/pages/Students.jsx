@@ -15,13 +15,17 @@ import {
   X, 
   RotateCcw,
   Edit2,
-  Trash2
+  Trash2,
+  MessageCircle,
+  Camera
 } from 'lucide-react';
+import { getStudentAvatar } from '../utils/avatarUtils';
+import { formatPhone, getWhatsAppUrl } from '../utils/phoneUtils';
 import './Students.css';
 
 const Students = () => {
   const navigate = useNavigate();
-  const { students, addStudent, updateStudent, deleteStudent, emotionalHistory, loading } = useAppContext();
+  const { students, addStudent, updateStudent, deleteStudent, uploadStudentAvatar, emotionalHistory, loading } = useAppContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -71,7 +75,7 @@ const Students = () => {
       due_date: parseInt(formData.due_date, 10) || 10,
       active: true,
       frequency: 0,
-      avatar: `https://i.pravatar.cc/150?u=${encodeURIComponent(formData.name.trim())}`
+      avatar: null
     });
     setIsModalOpen(false);
     setFormData({ name: '', plan: '', phone: '', weight: '', bodyFat: '', monthly_fee: '', due_date: 10 });
@@ -269,10 +273,22 @@ const Students = () => {
               <Card key={student.id} className="student-card">
                 <div className="student-card-header flex-between">
                   <div className="student-avatar-wrapper">
-                    <img src={student.avatar || `https://i.pravatar.cc/150?u=${student.id}`} alt={student.name} className="student-avatar" />
+                    <img src={getStudentAvatar(student)} alt={student.name} className="student-avatar" />
                     <span className={`status-indicator ${student.active ? 'active' : 'inactive'}`}></span>
                   </div>
                   <div className="card-actions">
+                    {student.phone && (
+                      <a 
+                        href={getWhatsAppUrl(student.phone, student.name)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="student-action-btn whatsapp" 
+                        title={`WhatsApp: ${formatPhone(student.phone)}`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MessageCircle size={15} />
+                      </a>
+                    )}
                     <button 
                       className="student-action-btn edit" 
                       title="Editar aluno"
@@ -366,6 +382,36 @@ const Students = () => {
       {/* Modal de Edição de Aluno */}
       <Modal isOpen={isEditModalOpen} onClose={() => { setIsEditModalOpen(false); setEditingStudent(null); }} title="Editar Dados do Aluno" maxWidth="560px">
         <form onSubmit={handleSaveEdit}>
+          {editingStudent && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem', padding: '0.85rem', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+              <img 
+                src={getStudentAvatar(editingStudent)} 
+                alt={editingStudent.name} 
+                style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--accent-color)', boxShadow: '0 0 10px rgba(0,240,255,0.2)' }} 
+              />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '500' }}>Foto de Perfil do Aluno</span>
+                <label className="secondary-button" style={{ cursor: 'pointer', padding: '0.4rem 0.8rem', fontSize: '0.8rem', gap: '0.4rem', width: 'fit-content' }}>
+                  <Camera size={14} /> Trocar Foto Real
+                  <input 
+                    type="file" 
+                    accept="image/jpeg,image/png,image/webp" 
+                    style={{ display: 'none' }}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const url = await uploadStudentAvatar(editingStudent.id, file);
+                      if (url) {
+                        setEditingStudent(prev => ({ ...prev, avatar: url }));
+                      }
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+              </div>
+            </div>
+          )}
+
           <div className="form-group">
             <label>Nome Completo</label>
             <input 

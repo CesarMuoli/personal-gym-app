@@ -16,6 +16,7 @@ import {
   Flame
 } from 'lucide-react';
 import { getLocalDateString } from '../utils/dateUtils';
+import { getStudentAvatar } from '../utils/avatarUtils';
 import './Finance.css';
 
 const Finance = () => {
@@ -297,7 +298,7 @@ const Finance = () => {
               {statusGroups.paid.map(s => (
                 <li key={s.id} className="student-item flex-between">
                   <div className="student-item-left">
-                    <img src={s.avatar || `https://i.pravatar.cc/150?u=${s.id}`} alt={s.name} />
+                    <img src={getStudentAvatar(s)} alt={s.name} />
                     <div className="student-info">
                       <strong>{s.name}</strong>
                       <span>{formatCurrency(s.monthly_fee)} • {formatPaidDate(s.last_payment_date)}</span>
@@ -350,7 +351,7 @@ const Finance = () => {
                 return (
                   <li key={s.id} className="student-item flex-between">
                     <div className="student-item-left">
-                      <img src={s.avatar || `https://i.pravatar.cc/150?u=${s.id}`} alt={s.name} />
+                      <img src={getStudentAvatar(s)} alt={s.name} />
                       <div className="student-info">
                         <strong>{s.name}</strong>
                         <div className="student-due-meta">
@@ -415,7 +416,7 @@ const Finance = () => {
                 return (
                   <li key={s.id} className="student-item flex-between">
                     <div className="student-item-left">
-                      <img src={s.avatar || `https://i.pravatar.cc/150?u=${s.id}`} alt={s.name} />
+                      <img src={getStudentAvatar(s)} alt={s.name} />
                       <div className="student-info">
                         <strong>{s.name}</strong>
                         <div className="student-due-meta">

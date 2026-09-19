@@ -283,6 +283,65 @@ export const AppProvider = ({ children }) => {
     return photoUrl;
   };
 
+  const uploadStudentAvatar = async (studentId, file) => {
+    const userId = session?.user?.id || 'public';
+    const rawExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+    const fileExt = allowedExtensions.includes(rawExt) ? rawExt : 'jpg';
+    const cleanFileName = `${userId}/avatars/${studentId}_${Date.now()}.${fileExt}`;
+    let targetFileName = cleanFileName;
+    
+    const { error: uploadError } = await supabase.storage
+      .from('evaluations')
+      .upload(cleanFileName, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (uploadError) {
+      console.error('Avatar upload error, trying fallback:', uploadError);
+      const fallbackName = `avatar_${studentId}_${Date.now()}.${fileExt}`;
+      const { error: fallbackError } = await supabase.storage
+        .from('evaluations')
+        .upload(fallbackName, file, { cacheControl: '3600', upsert: true });
+
+      if (fallbackError) {
+        toast.error('Erro ao fazer upload da foto de perfil.');
+        return null;
+      }
+      targetFileName = fallbackName;
+    }
+
+    let photoUrl = '';
+    const { data: signedData } = await supabase.storage
+      .from('evaluations')
+      .createSignedUrl(targetFileName, 60 * 60 * 24 * 365);
+
+    if (signedData?.signedUrl) {
+      photoUrl = signedData.signedUrl;
+    } else {
+      const { data: publicData } = supabase.storage.from('evaluations').getPublicUrl(targetFileName);
+      photoUrl = publicData.publicUrl;
+    }
+
+    const { error: updateError } = await supabase
+      .from('students')
+      .update({ avatar: photoUrl })
+      .eq('id', studentId)
+      .eq('user_id', session?.user?.id);
+      
+    if (updateError) {
+      console.error('Update student avatar error:', updateError);
+      toast.error('Erro ao vincular foto ao aluno.');
+      return null;
+    }
+    
+    setStudents(prev => prev.map(s => s.id === studentId ? { ...s, avatar: photoUrl } : s));
+    toast.success('Foto do aluno atualizada com sucesso!');
+    fetchData();
+    return photoUrl;
+  };
+
   const updateStudentFinance = async (studentId, financeData) => {
     setStudents(prev => prev.map(s => s.id === studentId ? { ...s, ...financeData } : s));
 
@@ -445,7 +504,7 @@ export const AppProvider = ({ children }) => {
       addStudent, updateStudent, deleteStudent,
       addEvent, deleteEvent,
       addLoad, addEmotionalScore,
-      uploadEvaluationPhoto, updateStudentFinance, updateFinancialGoals,
+      uploadEvaluationPhoto, uploadStudentAvatar, updateStudentFinance, updateFinancialGoals,
       addStudentWorkout, updateStudentWorkout, deleteStudentWorkout,
       refreshData: fetchData
     }}>

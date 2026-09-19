@@ -8,9 +8,11 @@ import { useAppContext } from '../context/AppContext';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { 
   User, Activity, Dumbbell, Ruler, ArrowLeft, TrendingUp, DollarSign, Plus, 
-  MessageCircle, Copy, Edit2, Trash2, FileText, Sparkles, Check
+  MessageCircle, Copy, Edit2, Trash2, FileText, Sparkles, Check, Camera
 } from 'lucide-react';
 import { getLocalDateString } from '../utils/dateUtils';
+import { getStudentAvatar } from '../utils/avatarUtils';
+import { formatPhone, getWhatsAppUrl } from '../utils/phoneUtils';
 import './StudentProfile.css';
 
 const EXERCISE_CATEGORIES = [
@@ -34,8 +36,8 @@ const StudentProfile = () => {
   const navigate = useNavigate();
   const { 
     students, loadProgression, emotionalHistory, studentWorkouts,
-    addLoad, addEmotionalScore, uploadEvaluationPhoto, updateStudentFinance,
-    addStudentWorkout, updateStudentWorkout, deleteStudentWorkout,
+    addLoad, addEmotionalScore, uploadEvaluationPhoto, uploadStudentAvatar, updateStudentFinance,
+    updateStudent, addStudentWorkout, updateStudentWorkout, deleteStudentWorkout,
     loading 
   } = useAppContext();
   
@@ -57,9 +59,14 @@ const StudentProfile = () => {
     ]
   });
 
+  // Estados de Avatar Real e WhatsApp
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isEditPhoneModalOpen, setIsEditPhoneModalOpen] = useState(false);
+
   // Busca segura sem fallback cego para students[0]
   const student = students.find(s => String(s.id) === String(id));
 
+  const [phoneInput, setPhoneInput] = useState(student?.phone || '');
   const [financeForm, setFinanceForm] = useState({
     monthly_fee: student?.monthly_fee || 0,
     due_date: student?.due_date || 10
@@ -72,6 +79,7 @@ const StudentProfile = () => {
       monthly_fee: student.monthly_fee || 0,
       due_date: student.due_date || 10
     });
+    setPhoneInput(student.phone || '');
   }
 
   if (loading) {
@@ -174,6 +182,51 @@ const StudentProfile = () => {
     } else {
       toast.dismiss('upload');
     }
+  };
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Formato inválido. Use fotos JPG, PNG ou WEBP.');
+      e.target.value = '';
+      return;
+    }
+
+    const maxBytes = 5 * 1024 * 1024; // 5 MB
+    if (file.size > maxBytes) {
+      toast.error('Foto muito pesada. O limite máximo é de 5MB.');
+      e.target.value = '';
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    toast.loading('Enviando foto de perfil do aluno...', { id: 'avatar-upload' });
+    try {
+      const url = await uploadStudentAvatar(student.id, file);
+      if (url) {
+        toast.success('Foto de perfil atualizada!', { id: 'avatar-upload' });
+      } else {
+        toast.dismiss('avatar-upload');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Falha ao enviar foto.', { id: 'avatar-upload' });
+    } finally {
+      setIsUploadingAvatar(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleSavePhone = async (e) => {
+    e.preventDefault();
+    await updateStudent(student.id, {
+      phone: phoneInput.trim()
+    });
+    setIsEditPhoneModalOpen(false);
+    toast.success('WhatsApp atualizado com sucesso!');
   };
 
   const handleUpdateFinance = async (e) => {
@@ -379,10 +432,79 @@ const StudentProfile = () => {
         </button>
         <div className="profile-info flex-between">
           <div className="profile-user">
-            <img src={student.avatar || `https://i.pravatar.cc/150?u=${student.id}`} alt={student.name} className="profile-avatar" />
-            <div>
-              <h1 className="title" style={{ marginBottom: '0.25rem' }}>{student.name}</h1>
-              <p className="subtitle">{student.plan || 'Sem plano cadastrado'} • {student.active ? 'Ativo' : 'Inativo'}</p>
+            <div className="profile-avatar-container">
+              <img 
+                src={getStudentAvatar(student)} 
+                alt={student.name} 
+                className="profile-avatar" 
+              />
+              <label 
+                htmlFor="avatar-upload-input" 
+                className={`avatar-upload-overlay ${isUploadingAvatar ? 'uploading' : ''}`}
+                title="Clique para trocar a foto real do aluno"
+              >
+                <Camera size={18} />
+                <span>{isUploadingAvatar ? '...' : 'Trocar'}</span>
+              </label>
+              <input 
+                id="avatar-upload-input" 
+                type="file" 
+                accept="image/jpeg,image/png,image/webp" 
+                style={{ display: 'none' }}
+                onChange={handleAvatarUpload}
+                disabled={isUploadingAvatar}
+              />
+            </div>
+
+            <div className="profile-user-details">
+              <div className="profile-name-row">
+                <h1 className="title" style={{ marginBottom: '0.25rem' }}>{student.name}</h1>
+                <span className={`status-pill ${student.active ? 'active' : 'inactive'}`}>
+                  {student.active ? 'Ativo' : 'Inativo'}
+                </span>
+              </div>
+              <p className="subtitle">{student.plan || 'Sem plano cadastrado'}</p>
+
+              {/* Botão de WhatsApp Pessoal ao lado da foto */}
+              <div className="profile-contact-row">
+                {student.phone ? (
+                  <a
+                    href={getWhatsAppUrl(student.phone, student.name)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="profile-whatsapp-btn"
+                    title={`Abrir WhatsApp pessoal com ${student.name}`}
+                  >
+                    <MessageCircle size={17} className="whatsapp-icon" />
+                    <span className="whatsapp-label">WhatsApp:</span>
+                    <span className="whatsapp-number">{formatPhone(student.phone)}</span>
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    className="profile-whatsapp-btn unlinked"
+                    onClick={() => {
+                      setPhoneInput(student.phone || '');
+                      setIsEditPhoneModalOpen(true);
+                    }}
+                    title="Cadastrar WhatsApp do aluno para contato rápido"
+                  >
+                    <MessageCircle size={17} className="whatsapp-icon" />
+                    <span>+ Cadastrar WhatsApp</span>
+                  </button>
+                )}
+                <button 
+                  type="button"
+                  className="quick-edit-phone-btn" 
+                  title="Editar número do WhatsApp" 
+                  onClick={() => {
+                    setPhoneInput(student.phone || '');
+                    setIsEditPhoneModalOpen(true);
+                  }}
+                >
+                  <Edit2 size={13} />
+                </button>
+              </div>
             </div>
           </div>
           <div className="profile-actions">
@@ -916,6 +1038,51 @@ const StudentProfile = () => {
               style={{ flex: 2, justifyContent: 'center' }}
             >
               Salvar Ficha de Treino
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal Rápido de WhatsApp / Contato */}
+      <Modal
+        isOpen={isEditPhoneModalOpen}
+        onClose={() => setIsEditPhoneModalOpen(false)}
+        title="WhatsApp do Aluno"
+        maxWidth="460px"
+      >
+        <form onSubmit={handleSavePhone}>
+          <div className="modal-body" style={{ padding: '1rem 0' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '1.25rem', lineHeight: '1.5' }}>
+              Insira o número de WhatsApp de <strong>{student.name}</strong> com DDD. Você poderá iniciar conversas em 1 clique direto pelo painel.
+            </p>
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                Número do WhatsApp (com DDD)
+              </label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="(11) 99999-9999"
+                value={phoneInput}
+                onChange={(e) => setPhoneInput(e.target.value)}
+                autoFocus
+              />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', justifyContent: 'flex-end' }}>
+            <button 
+              type="button" 
+              className="secondary-button" 
+              onClick={() => setIsEditPhoneModalOpen(false)}
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              className="primary-button" 
+              style={{ background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)', color: '#05050A', fontWeight: '700' }}
+            >
+              <Check size={16} /> Salvar WhatsApp
             </button>
           </div>
         </form>

@@ -64,6 +64,17 @@ Realizamos uma auditoria minuciosa, crítica e recursiva em todos os subsistemas
    - Criação da persistência em **Tripla Camada** (`AppContext.jsx`): grava em `user_metadata` + banco com geração de ID dinâmico + local state.
    - Criação do script definitivo [`SCRIPT_MESTRE_BLINDADO.sql`](file:///c:/Projetos/antigravity/personal-gym/SCRIPT_MESTRE_BLINDADO.sql) com RLS, sequences, constraints e storage bucket.
 
+6. **Fotos Reais no Perfil dos Alunos (Upload de Avatar + Catálogo HD):**
+   - Criada a função `uploadStudentAvatar(studentId, file)` no `AppContext.jsx` vinculada ao Supabase Storage no bucket `evaluations`.
+   - Botão interativo de câmera sobre o avatar no cabeçalho do perfil do aluno (`StudentProfile.jsx`) e no modal de edição (`Students.jsx`).
+   - Criado `avatarUtils.js` com catálogo de fotos reais de alta definição (atletas/musculação), eliminando de vez links quebrados ou avatares em desenho do pravatar.cc.
+
+7. **Link Direto de WhatsApp Pessoal ao Lado da Foto:**
+   - Botão em destaque em verde WhatsApp (`#25D366`) com efeito glow neon ao lado da foto e nome do aluno no perfil.
+   - 1 clique abre diretamente a conversa no WhatsApp Web ou App do celular com o número correto e saudação inicial pronta.
+   - Opção de cadastrar/editar o número em 1 clique se o aluno ainda não tiver telefone salvo.
+   - Atalho de WhatsApp adicionado também diretamente nos cards da listagem de alunos (`Students.jsx`).
+
 ---
 
 ## 🗂️ 3. Mapa de Arquivos Principais
@@ -77,6 +88,8 @@ Realizamos uma auditoria minuciosa, crítica e recursiva em todos os subsistemas
 | [`src/pages/Students.jsx`](file:///c:/Projetos/antigravity/personal-gym/src/pages/Students.jsx) | Listagem, busca, ordenação (A-Z) e modais responsivos de cadastro/edição. |
 | [`src/pages/Calendar.jsx`](file:///c:/Projetos/antigravity/personal-gym/src/pages/Calendar.jsx) | Agenda mensal interativa, gaveta de eventos e novos agendamentos. |
 | [`src/components/UI/Modal.jsx`](file:///c:/Projetos/antigravity/personal-gym/src/components/UI/Modal.jsx) | Modal responsivo sem cortes com suporte a largura dinâmica. |
+| [`src/utils/avatarUtils.js`](file:///c:/Projetos/antigravity/personal-gym/src/utils/avatarUtils.js) | Catálogo de retratos reais em HD e resolvedor inteligente de avatares. |
+| [`src/utils/phoneUtils.js`](file:///c:/Projetos/antigravity/personal-gym/src/utils/phoneUtils.js) | Formatação de telefones com DDD e gerador de links diretos para o WhatsApp. |
 | [`SCRIPT_MESTRE_BLINDADO.sql`](file:///c:/Projetos/antigravity/personal-gym/SCRIPT_MESTRE_BLINDADO.sql) | Script SQL para rodar no Supabase que aplica RLS e sequences em 100% das tabelas. |
 
 ---
