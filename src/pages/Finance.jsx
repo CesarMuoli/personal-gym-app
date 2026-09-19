@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import Card from '../components/UI/Card';
 import Modal from '../components/UI/Modal';
@@ -22,17 +22,9 @@ const Finance = () => {
   const { students, financialGoals, updateFinancialGoals, updateStudentFinance, loading } = useAppContext();
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [goalsForm, setGoalsForm] = useState({
-    monthly_goal: financialGoals?.monthly_goal || 0,
-    quarterly_goal: financialGoals?.quarterly_goal || 0
+    monthly_goal: 0,
+    quarterly_goal: 0
   });
-
-  // Sincroniza o formulário quando os dados do backend chegam/atualizam
-  useEffect(() => {
-    setGoalsForm({
-      monthly_goal: financialGoals?.monthly_goal || 0,
-      quarterly_goal: financialGoals?.quarterly_goal || 0
-    });
-  }, [financialGoals]);
 
   // Lógica de Datas e Prazos
   const todayDate = new Date();
