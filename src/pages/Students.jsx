@@ -325,7 +325,7 @@ const Students = () => {
       </div>
 
       {/* Modal de Cadastro de Novo Aluno */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Cadastrar Novo Aluno">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Cadastrar Novo Aluno" maxWidth="560px">
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Nome Completo</label>
@@ -364,7 +364,7 @@ const Students = () => {
       </Modal>
 
       {/* Modal de Edição de Aluno */}
-      <Modal isOpen={isEditModalOpen} onClose={() => { setIsEditModalOpen(false); setEditingStudent(null); }} title="Editar Dados do Aluno">
+      <Modal isOpen={isEditModalOpen} onClose={() => { setIsEditModalOpen(false); setEditingStudent(null); }} title="Editar Dados do Aluno" maxWidth="560px">
         <form onSubmit={handleSaveEdit}>
           <div className="form-group">
             <label>Nome Completo</label>

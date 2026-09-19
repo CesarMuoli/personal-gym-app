@@ -751,6 +751,7 @@ const StudentProfile = () => {
         isOpen={isWorkoutModalOpen} 
         onClose={() => setIsWorkoutModalOpen(false)} 
         title={editingWorkoutId ? "Editar Ficha de Treino" : "Montar Ficha de Treino"}
+        maxWidth="780px"
       >
         <form onSubmit={handleSaveWorkout} className="workout-builder-form">
           <div className="form-group">

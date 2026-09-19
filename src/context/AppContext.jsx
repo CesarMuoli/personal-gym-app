@@ -143,10 +143,11 @@ export const AppProvider = ({ children }) => {
       toast.error('Erro ao excluir aluno.');
       return false;
     }
-    setStudents(prev => prev.filter(s => s.id !== studentId));
-    setCalendarEvents(prev => prev.filter(e => e.student_id !== studentId));
-    setLoadProgression(prev => prev.filter(l => l.student_id !== studentId));
-    setEmotionalHistory(prev => prev.filter(e => e.student_id !== studentId));
+    setStudents(prev => prev.filter(s => String(s.id) !== String(studentId)));
+    setCalendarEvents(prev => prev.filter(e => String(e.student_id) !== String(studentId)));
+    setLoadProgression(prev => prev.filter(l => String(l.student_id) !== String(studentId)));
+    setEmotionalHistory(prev => prev.filter(e => String(e.student_id) !== String(studentId)));
+    setStudentWorkouts(prev => prev.filter(w => String(w.student_id) !== String(studentId)));
     toast.success('Aluno removido com sucesso!');
     return true;
   };
@@ -266,7 +267,8 @@ export const AppProvider = ({ children }) => {
     const { error: updateError } = await supabase
       .from('students')
       .update({ [column]: photoUrl })
-      .eq('id', studentId);
+      .eq('id', studentId)
+      .eq('user_id', session?.user?.id);
       
     if (updateError) {
       console.error('Update student photo error:', updateError);
@@ -377,6 +379,7 @@ export const AppProvider = ({ children }) => {
   const addStudentWorkout = async (workoutData) => {
     const payload = {
       ...workoutData,
+      student_id: workoutData.student_id ? parseInt(workoutData.student_id, 10) : null,
       user_id: session?.user?.id
     };
     const { data, error } = await supabase.from('student_workouts').insert([payload]).select();
@@ -394,12 +397,17 @@ export const AppProvider = ({ children }) => {
   };
 
   const updateStudentWorkout = async (workoutId, workoutData) => {
+    const cleanPayload = {
+      ...workoutData,
+      updated_at: new Date().toISOString()
+    };
+    if (cleanPayload.student_id) {
+      cleanPayload.student_id = parseInt(cleanPayload.student_id, 10);
+    }
+
     const { data, error } = await supabase
       .from('student_workouts')
-      .update({
-        ...workoutData,
-        updated_at: new Date().toISOString()
-      })
+      .update(cleanPayload)
       .eq('id', workoutId)
       .eq('user_id', session?.user?.id)
       .select();

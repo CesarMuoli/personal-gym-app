@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import './UI.css';
 import { X } from 'lucide-react';
 
-const Modal = ({ isOpen, onClose, title, children }) => {
+const Modal = ({ isOpen, onClose, title, children, maxWidth, className = '' }) => {
   useEffect(() => {
     if (!isOpen) return;
 
@@ -20,10 +20,14 @@ const Modal = ({ isOpen, onClose, title, children }) => {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass-panel" onClick={(e) => e.stopPropagation()}>
+      <div 
+        className={`modal-content glass-panel ${className}`} 
+        style={maxWidth ? { maxWidth } : undefined}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-header flex-between">
-          <h3 style={{margin: 0}}>{title}</h3>
-          <button onClick={onClose} className="icon-btn-transparent" style={{padding: 0}} aria-label="Fechar modal">
+          <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>{title}</h3>
+          <button onClick={onClose} className="icon-btn-transparent" style={{ padding: '0.35rem' }} aria-label="Fechar modal">
             <X size={20} />
           </button>
         </div>

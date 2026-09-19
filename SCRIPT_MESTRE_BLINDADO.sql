@@ -226,7 +226,38 @@ CREATE INDEX IF NOT EXISTS idx_student_workouts_student_id ON public.student_wor
 CREATE INDEX IF NOT EXISTS idx_financial_goals_user_id ON public.financial_goals(user_id);
 
 -- ------------------------------------------------------------------------------
--- 5. VERIFICAÇÃO FINAL DE BLINDAGEM
+-- 5. STORAGE BUCKET PARA AVALIAÇÕES FÍSICAS (FOTOS ANTES/DEPOIS)
+-- ------------------------------------------------------------------------------
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('evaluations', 'evaluations', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Políticas de Acesso ao Storage
+DROP POLICY IF EXISTS "Public Access to Evaluations" ON storage.objects;
+CREATE POLICY "Public Access to Evaluations" 
+ON storage.objects FOR SELECT 
+USING (bucket_id = 'evaluations');
+
+DROP POLICY IF EXISTS "Authenticated Users can Upload Evaluations" ON storage.objects;
+CREATE POLICY "Authenticated Users can Upload Evaluations" 
+ON storage.objects FOR INSERT 
+TO authenticated 
+WITH CHECK (bucket_id = 'evaluations');
+
+DROP POLICY IF EXISTS "Authenticated Users can Update Evaluations" ON storage.objects;
+CREATE POLICY "Authenticated Users can Update Evaluations" 
+ON storage.objects FOR UPDATE 
+TO authenticated 
+USING (bucket_id = 'evaluations');
+
+DROP POLICY IF EXISTS "Authenticated Users can Delete Evaluations" ON storage.objects;
+CREATE POLICY "Authenticated Users can Delete Evaluations" 
+ON storage.objects FOR DELETE 
+TO authenticated 
+USING (bucket_id = 'evaluations');
+
+-- ------------------------------------------------------------------------------
+-- 6. VERIFICAÇÃO FINAL DE BLINDAGEM (RESULTADO ESPERADO: TUDO TRUE)
 -- ------------------------------------------------------------------------------
 SELECT 
     schemaname, 
@@ -235,3 +266,4 @@ SELECT
 FROM pg_tables 
 WHERE schemaname = 'public' 
 AND tablename IN ('students', 'calendar_events', 'load_progression', 'emotional_history', 'student_workouts', 'financial_goals');
+

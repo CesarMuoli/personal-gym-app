@@ -145,20 +145,60 @@ button:active {
 
 .modal-content {
   background: var(--bg-secondary);
-  width: 90%;
-  max-width: 500px;
-  padding: 2rem;
+  width: 92%;
+  max-width: 520px;
+  padding: 1.75rem;
   border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.1);
-  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(0, 240, 255, 0.1);
-  max-height: 85vh;
-  overflow-y: auto;
-  margin: 1.5rem;
-  animation: scaleUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8), 0 0 0 1px rgba(0, 240, 255, 0.12);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  margin: 1rem;
+  animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .modal-header {
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.modal-body {
+  overflow-y: auto;
+  flex: 1;
+  max-height: calc(90vh - 6rem);
+  padding-right: 6px;
+}
+
+.modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: rgba(0, 240, 255, 0.25);
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 240, 255, 0.5);
+}
+
+@media (max-width: 640px) {
+  .modal-content {
+    width: 95%;
+    padding: 1.25rem;
+    max-height: 95vh;
+  }
+  .modal-body {
+    max-height: calc(95vh - 5rem);
+  }
 }
 
 /* Forms */
