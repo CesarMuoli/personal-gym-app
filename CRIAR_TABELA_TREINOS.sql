@@ -11,7 +11,7 @@
 CREATE TABLE IF NOT EXISTS public.student_workouts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES auth.users(id) DEFAULT auth.uid(),
-    student_id UUID REFERENCES public.students(id) ON DELETE CASCADE,
+    student_id BIGINT REFERENCES public.students(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
     notes TEXT,
     exercises JSONB NOT NULL DEFAULT '[]'::jsonb,
