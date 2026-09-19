@@ -289,25 +289,54 @@ export const AppProvider = ({ children }) => {
   const updateFinancialGoals = async (goalsData) => {
     setFinancialGoals(prev => ({ ...prev, ...goalsData }));
 
+    const userId = session?.user?.id;
+    if (!userId) {
+      toast.error('Sessão expirada. Faça login novamente.');
+      return false;
+    }
+
     const payload = {
       monthly_goal: Number(goalsData.monthly_goal) || 0,
       quarterly_goal: Number(goalsData.quarterly_goal) || 0,
-      user_id: session?.user?.id,
+      user_id: userId,
       updated_at: new Date().toISOString()
     };
 
+    // Estratégia 1: Upsert com onConflict
     const { error } = await supabase
       .from('financial_goals')
       .upsert(payload, { onConflict: 'user_id' });
 
     if (error) {
-      console.error('Update goals error:', error);
-      toast.error('Erro ao atualizar metas.');
-      fetchData();
-      return false;
+      console.error('Upsert goals error:', error.message, error.details, error.hint);
+      
+      // Estratégia 2: Fallback - tentar update direto
+      const { error: updateErr } = await supabase
+        .from('financial_goals')
+        .update({
+          monthly_goal: payload.monthly_goal,
+          quarterly_goal: payload.quarterly_goal,
+          updated_at: payload.updated_at
+        })
+        .eq('user_id', userId);
+
+      if (updateErr) {
+        // Estratégia 3: Fallback final - insert
+        const { error: insertErr } = await supabase
+          .from('financial_goals')
+          .insert([payload]);
+
+        if (insertErr) {
+          console.error('Insert goals fallback error:', insertErr.message);
+          toast.error('Erro ao salvar metas. Verifique as permissões do banco.');
+          fetchData();
+          return false;
+        }
+      }
     }
+    
     toast.success('Metas atualizadas!');
-    fetchData();
+    await fetchData();
     return true;
   };
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import Card from '../components/UI/Card';
 import Modal from '../components/UI/Modal';
@@ -25,6 +25,14 @@ const Finance = () => {
     monthly_goal: financialGoals?.monthly_goal || 0,
     quarterly_goal: financialGoals?.quarterly_goal || 0
   });
+
+  // Sincroniza o formulário quando os dados do backend chegam/atualizam
+  useEffect(() => {
+    setGoalsForm({
+      monthly_goal: financialGoals?.monthly_goal || 0,
+      quarterly_goal: financialGoals?.quarterly_goal || 0
+    });
+  }, [financialGoals]);
 
   // Cálculos Financeiros Gerais
   const activeStudents = students.filter(s => s.active);

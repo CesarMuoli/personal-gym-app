@@ -151,8 +151,9 @@ button:active {
   border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.1);
   box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(0, 240, 255, 0.1);
-  max-height: 90vh;
+  max-height: 85vh;
   overflow-y: auto;
+  margin: 1.5rem;
   animation: scaleUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
