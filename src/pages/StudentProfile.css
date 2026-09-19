@@ -193,3 +193,329 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   FICHAS DE TREINO - DESIGN TECH PREMIUM
+   ========================================================================== */
+
+.workout-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.workout-tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.workout-tab-header h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.workout-tab-header p {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.workout-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.workout-card {
+  background: rgba(18, 18, 26, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 1.5rem;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.workout-card:hover {
+  border-color: rgba(0, 240, 255, 0.3);
+  box-shadow: 0 8px 30px rgba(0, 240, 255, 0.08);
+  transform: translateY(-2px);
+}
+
+.workout-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.workout-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.workout-title-group h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.workout-count-badge {
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--accent-color);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.workout-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* Botão WhatsApp Especial com Identidade Oficial e Glow */
+.whatsapp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.55rem 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 16px rgba(37, 211, 102, 0.35);
+}
+
+.whatsapp-btn:hover {
+  background: linear-gradient(135deg, #2ae26e 0%, #179e8e 100%);
+  box-shadow: 0 0 24px rgba(37, 211, 102, 0.55);
+  transform: scale(1.02);
+}
+
+.icon-btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon-btn-action:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.icon-btn-action.danger:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.workout-notes-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background: rgba(0, 240, 255, 0.04);
+  border: 1px solid rgba(0, 240, 255, 0.15);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 1.25rem;
+  line-height: 1.4;
+}
+
+.workout-notes-banner svg {
+  color: var(--accent-color);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Lista de Exercícios do Treino */
+.workout-exercise-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.workout-exercise-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 1.25rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+.workout-exercise-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.exercise-main-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.exercise-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0, 240, 255, 0.1);
+  color: var(--accent-color);
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.exercise-name-box strong {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.exercise-name-box span {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.exercise-params-pills {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.param-pill {
+  font-size: 0.8rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+}
+
+.param-pill strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.param-pill.sets-pill {
+  border-color: rgba(139, 92, 246, 0.3);
+  color: #c4b5fd;
+}
+
+.param-pill.reps-pill {
+  border-color: rgba(0, 240, 255, 0.3);
+  color: #67e8f9;
+}
+
+.param-pill.notes-pill {
+  font-style: italic;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* Modal Construtor de Treinos */
+.workout-builder-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.quick-templates {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.4rem;
+}
+
+.quick-tag-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quick-tag-btn:hover {
+  background: rgba(0, 240, 255, 0.1);
+  color: var(--accent-color);
+  border-color: rgba(0, 240, 255, 0.3);
+}
+
+.exercise-rows-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.exercise-builder-row {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  position: relative;
+}
+
+.exercise-builder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.exercise-builder-grid {
+  display: grid;
+  grid-template-columns: 140px 1fr 90px 100px;
+  gap: 0.6rem;
+}
+
+@media (max-width: 768px) {
+  .exercise-builder-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+

@@ -30,8 +30,8 @@ const Students = () => {
   const [sortOrder, setSortOrder] = useState('az'); // Padrão: A-Z
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'active', 'inactive'
 
-  const [formData, setFormData] = useState({ name: '', plan: '', weight: '', bodyFat: '', monthly_fee: '', due_date: 10 });
-  const [editFormData, setEditFormData] = useState({ name: '', plan: '', weight: '', body_fat: '', monthly_fee: '', due_date: 10, active: true });
+  const [formData, setFormData] = useState({ name: '', plan: '', phone: '', weight: '', bodyFat: '', monthly_fee: '', due_date: 10 });
+  const [editFormData, setEditFormData] = useState({ name: '', plan: '', phone: '', weight: '', body_fat: '', monthly_fee: '', due_date: 10, active: true });
 
   // Filtragem e Ordenação dos Alunos
   const filteredStudents = students
@@ -64,6 +64,7 @@ const Students = () => {
     await addStudent({
       name: formData.name,
       plan: formData.plan,
+      phone: formData.phone ? formData.phone.trim() : null,
       weight: parseFloat(formData.weight) || 0,
       body_fat: parseFloat(formData.bodyFat) || 0,
       monthly_fee: parseFloat(formData.monthly_fee) || 0,
@@ -73,7 +74,7 @@ const Students = () => {
       avatar: `https://i.pravatar.cc/150?u=${encodeURIComponent(formData.name.trim())}`
     });
     setIsModalOpen(false);
-    setFormData({ name: '', plan: '', weight: '', bodyFat: '', monthly_fee: '', due_date: 10 });
+    setFormData({ name: '', plan: '', phone: '', weight: '', bodyFat: '', monthly_fee: '', due_date: 10 });
   };
 
   const handleOpenEdit = (student) => {
@@ -81,6 +82,7 @@ const Students = () => {
     setEditFormData({
       name: student.name || '',
       plan: student.plan || '',
+      phone: student.phone || '',
       weight: student.weight || '',
       body_fat: student.body_fat ?? student.bodyFat ?? '',
       monthly_fee: student.monthly_fee || '',
@@ -96,6 +98,7 @@ const Students = () => {
     await updateStudent(editingStudent.id, {
       name: editFormData.name,
       plan: editFormData.plan,
+      phone: editFormData.phone ? editFormData.phone.trim() : null,
       weight: parseFloat(editFormData.weight) || 0,
       body_fat: parseFloat(editFormData.body_fat) || 0,
       monthly_fee: parseFloat(editFormData.monthly_fee) || 0,
@@ -332,6 +335,10 @@ const Students = () => {
             <label>Plano</label>
             <input type="text" className="form-input" value={formData.plan} onChange={e => setFormData({...formData, plan: e.target.value})} placeholder="Ex: Mensal 3x" />
           </div>
+          <div className="form-group">
+            <label>WhatsApp / Telefone (Opcional)</label>
+            <input type="text" className="form-input" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="Ex: (11) 99999-9999" />
+          </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
             <div className="form-group" style={{ flex: 1 }}>
               <label>Mensalidade (R$)</label>
@@ -377,6 +384,17 @@ const Students = () => {
               className="form-input" 
               value={editFormData.plan} 
               onChange={e => setEditFormData({...editFormData, plan: e.target.value})} 
+            />
+          </div>
+
+          <div className="form-group">
+            <label>WhatsApp / Telefone (Opcional)</label>
+            <input 
+              type="text" 
+              className="form-input" 
+              value={editFormData.phone} 
+              onChange={e => setEditFormData({...editFormData, phone: e.target.value})} 
+              placeholder="Ex: (11) 99999-9999"
             />
           </div>
 

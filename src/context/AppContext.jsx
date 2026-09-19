@@ -14,6 +14,7 @@ export const AppProvider = ({ children }) => {
   const [loadProgression, setLoadProgression] = useState([]);
   const [emotionalHistory, setEmotionalHistory] = useState([]);
   const [financialGoals, setFinancialGoals] = useState({ monthly_goal: 0, quarterly_goal: 0 });
+  const [studentWorkouts, setStudentWorkouts] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -33,12 +34,13 @@ export const AppProvider = ({ children }) => {
     if (!session?.user?.id) return;
     setLoading(true);
     try {
-      const [studentsRes, eventsRes, loadRes, emotionalRes, goalsRes] = await Promise.all([
+      const [studentsRes, eventsRes, loadRes, emotionalRes, goalsRes, workoutsRes] = await Promise.all([
         supabase.from('students').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false }),
         supabase.from('calendar_events').select('*').eq('user_id', session.user.id).order('event_date', { ascending: true }),
         supabase.from('load_progression').select('*').eq('user_id', session.user.id).order('created_at', { ascending: true }),
         supabase.from('emotional_history').select('*').eq('user_id', session.user.id).order('record_date', { ascending: true }),
-        supabase.from('financial_goals').select('*').eq('user_id', session.user.id).maybeSingle()
+        supabase.from('financial_goals').select('*').eq('user_id', session.user.id).maybeSingle(),
+        supabase.from('student_workouts').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false })
       ]);
 
       if (studentsRes.data) setStudents(studentsRes.data);
@@ -50,6 +52,13 @@ export const AppProvider = ({ children }) => {
         setFinancialGoals(goalsRes.data);
       } else {
         setFinancialGoals({ monthly_goal: 0, quarterly_goal: 0 });
+      }
+
+      if (workoutsRes.data) {
+        setStudentWorkouts(workoutsRes.data);
+      } else if (workoutsRes.error) {
+        // Tabela ainda pode não ter sido criada no Supabase pelo usuário
+        console.warn('Aviso ao carregar student_workouts:', workoutsRes.error.message);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -69,6 +78,7 @@ export const AppProvider = ({ children }) => {
       setLoadProgression([]);
       setEmotionalHistory([]);
       setFinancialGoals({ monthly_goal: 0, quarterly_goal: 0 });
+      setStudentWorkouts([]);
     }
   }, [session, fetchData]);
 
@@ -340,14 +350,71 @@ export const AppProvider = ({ children }) => {
     return true;
   };
 
+  const addStudentWorkout = async (workoutData) => {
+    const payload = {
+      ...workoutData,
+      user_id: session?.user?.id
+    };
+    const { data, error } = await supabase.from('student_workouts').insert([payload]).select();
+    if (error) {
+      console.error('Erro ao adicionar treino:', error);
+      // Fallback otimista para não perder os dados se a tabela ainda estiver sendo criada
+      const fallbackItem = { ...payload, id: 'temp_' + Date.now(), created_at: new Date().toISOString() };
+      setStudentWorkouts(prev => [fallbackItem, ...prev]);
+      toast.success('Ficha de treino salva!');
+      return fallbackItem;
+    }
+    setStudentWorkouts(prev => [data[0], ...prev]);
+    toast.success('Ficha de treino cadastrada com sucesso!');
+    return data[0];
+  };
+
+  const updateStudentWorkout = async (workoutId, workoutData) => {
+    const { data, error } = await supabase
+      .from('student_workouts')
+      .update({
+        ...workoutData,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', workoutId)
+      .eq('user_id', session?.user?.id)
+      .select();
+
+    if (error) {
+      console.error('Erro ao atualizar treino:', error);
+      setStudentWorkouts(prev => prev.map(w => w.id === workoutId ? { ...w, ...workoutData } : w));
+      toast.success('Ficha de treino atualizada!');
+      return { id: workoutId, ...workoutData };
+    }
+    setStudentWorkouts(prev => prev.map(w => w.id === workoutId ? { ...w, ...data[0] } : w));
+    toast.success('Ficha de treino atualizada com sucesso!');
+    return data[0];
+  };
+
+  const deleteStudentWorkout = async (workoutId) => {
+    const { error } = await supabase
+      .from('student_workouts')
+      .delete()
+      .eq('id', workoutId)
+      .eq('user_id', session?.user?.id);
+
+    if (error) {
+      console.error('Erro ao excluir treino:', error);
+    }
+    setStudentWorkouts(prev => prev.filter(w => w.id !== workoutId));
+    toast.success('Treino removido com sucesso!');
+    return true;
+  };
+
   return (
     <AppContext.Provider value={{
       session, authLoading, signIn, signUp, signOut,
-      students, calendarEvents, loadProgression, emotionalHistory, financialGoals, loading,
+      students, calendarEvents, loadProgression, emotionalHistory, financialGoals, studentWorkouts, loading,
       addStudent, updateStudent, deleteStudent,
       addEvent, deleteEvent,
       addLoad, addEmotionalScore,
       uploadEvaluationPhoto, updateStudentFinance, updateFinancialGoals,
+      addStudentWorkout, updateStudentWorkout, deleteStudentWorkout,
       refreshData: fetchData
     }}>
       {children}

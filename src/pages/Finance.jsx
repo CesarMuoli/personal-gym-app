@@ -34,13 +34,6 @@ const Finance = () => {
     });
   }, [financialGoals]);
 
-  // Cálculos Financeiros Gerais
-  const activeStudents = students.filter(s => s.active);
-  const totalRevenue = activeStudents.reduce((acc, student) => acc + (Number(student.monthly_fee) || 0), 0);
-  const averageTicket = activeStudents.length > 0 ? totalRevenue / activeStudents.length : 0;
-  
-  const monthlyGoalProgress = financialGoals?.monthly_goal > 0 ? (totalRevenue / financialGoals.monthly_goal) * 100 : 0;
-
   // Lógica de Datas e Prazos
   const todayDate = new Date();
   const currentMonth = todayDate.getMonth(); // 0 a 11 (Jan=0, Set=8, Dez=11)
@@ -63,11 +56,10 @@ const Finance = () => {
   const semesterTag = currentSemester === 1 ? 'S1' : 'S2';
   const semesterFullName = `${currentSemester}º Semestre (${semesterTag})`;
 
-  // Estimativa Semestral (6 meses de faturamento dos alunos ativos)
-  const semiannualRevenueEstimate = totalRevenue * 6;
-  const semiannualGoalProgress = financialGoals?.quarterly_goal > 0 
-    ? (semiannualRevenueEstimate / financialGoals.quarterly_goal) * 100 
-    : 0;
+  // Cálculos Financeiros Gerais
+  const activeStudents = students.filter(s => s.active);
+  const totalRevenue = activeStudents.reduce((acc, student) => acc + (Number(student.monthly_fee) || 0), 0);
+  const averageTicket = activeStudents.length > 0 ? totalRevenue / activeStudents.length : 0;
 
   // Classificação Canônica em 3 Grupos (Sem duplicidade)
   const getPaymentStatus = (student) => {
@@ -105,6 +97,19 @@ const Finance = () => {
   const paidTotal = statusGroups.paid.reduce((acc, s) => acc + (Number(s.monthly_fee) || 0), 0);
   const upcomingTotal = statusGroups.upcoming.reduce((acc, s) => acc + (Number(s.monthly_fee) || 0), 0);
   const lateTotal = statusGroups.late.reduce((acc, s) => acc + (Number(s.monthly_fee) || 0), 0);
+  const pendingTotal = upcomingTotal + lateTotal;
+
+  // Meta Mensal: Medida exclusivamente sobre a Receita Realizada (paidTotal)
+  const monthlyGoal = Number(financialGoals?.monthly_goal) || 0;
+  const monthlyGoalProgress = monthlyGoal > 0 ? (paidTotal / monthlyGoal) * 100 : 0;
+  const monthlyGoalRemaining = Math.max(0, monthlyGoal - paidTotal);
+
+  // Estimativa Semestral (6 meses da carteira ativa)
+  const semiannualRevenueEstimate = totalRevenue * 6;
+  const semiannualGoal = Number(financialGoals?.quarterly_goal) || 0;
+  const semiannualGoalProgress = semiannualGoal > 0 
+    ? (semiannualRevenueEstimate / semiannualGoal) * 100 
+    : 0;
 
   const handleQuickPay = async (student) => {
     const today = getLocalDateString();
@@ -172,14 +177,14 @@ const Finance = () => {
       {/* Cards de Métricas com Identidade Cromática Distinta (UI/UX 10/10) */}
       <div className="metrics-grid">
         
-        {/* 1. Faturamento Mensal (Cyan Neon) */}
+        {/* 1. Receita Recebida no Mês (Cyan Neon) */}
         <Card className="metric-card glow-card-cyan">
           <div className="metric-icon revenue-icon">
             <DollarSign size={24} />
           </div>
-          <h3>Faturamento Mensal</h3>
-          <p className="metric-value">{formatCurrency(totalRevenue)}</p>
-          <span className="metric-helper">Receita ativa de {activeStudents.length} alunos</span>
+          <h3>Receita Recebida</h3>
+          <p className="metric-value">{formatCurrency(paidTotal)}</p>
+          <span className="metric-helper">Previsão: {formatCurrency(totalRevenue)} ({statusGroups.paid.length}/{activeStudents.length} pagos)</span>
         </Card>
 
         {/* 2. Ticket Médio (Cyber Purple Neon) */}
@@ -189,7 +194,7 @@ const Finance = () => {
           </div>
           <h3>Ticket Médio</h3>
           <p className="metric-value">{formatCurrency(averageTicket)}</p>
-          <span className="metric-helper">Média por aluno ativo</span>
+          <span className="metric-helper">Pendente a receber: {formatCurrency(pendingTotal)}</span>
         </Card>
 
         {/* 3. Meta Mensal (Emerald Neon + Timer) */}
@@ -201,7 +206,7 @@ const Finance = () => {
               </div>
               <div>
                 <h3>Meta Mensal</h3>
-                <span className="goal-target">Alvo: {formatCurrency(financialGoals?.monthly_goal || 0)}</span>
+                <span className="goal-target">Alvo: {formatCurrency(monthlyGoal)}</span>
               </div>
             </div>
             <div className="goal-timer-badge green" title="Dias restantes para fechar o mês">
@@ -216,12 +221,12 @@ const Finance = () => {
             />
           </div>
           <div className="flex-between metric-sub-row">
-            <p className="metric-sub">Progresso: <strong>{monthlyGoalProgress.toFixed(1)}%</strong></p>
+            <p className="metric-sub">Progresso: <strong>{monthlyGoalProgress.toFixed(1)}%</strong> ({formatCurrency(paidTotal)})</p>
             <p className="metric-sub">
               {monthlyGoalProgress >= 100 ? (
                 <span className="goal-reached-text">Meta Atingida! 🚀</span>
               ) : (
-                `Falta ${formatCurrency(Math.max(0, (financialGoals?.monthly_goal || 0) - totalRevenue))}`
+                `Falta ${formatCurrency(monthlyGoalRemaining)}`
               )}
             </p>
           </div>
@@ -236,7 +241,7 @@ const Finance = () => {
               </div>
               <div>
                 <h3>Meta Semestral ({semesterTag})</h3>
-                <span className="goal-target">Alvo: {formatCurrency(financialGoals?.quarterly_goal || 0)}</span>
+                <span className="goal-target">Alvo: {formatCurrency(semiannualGoal)}</span>
               </div>
             </div>
             <div className="goal-timer-badge amber" title={`Dias restantes para encerrar o ${semesterFullName}`}>
