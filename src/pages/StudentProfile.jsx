@@ -8,7 +8,8 @@ import { useAppContext } from '../context/AppContext';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { 
   User, Activity, Dumbbell, Ruler, ArrowLeft, TrendingUp, DollarSign, Plus, 
-  MessageCircle, Copy, Edit2, Trash2, FileText, Sparkles, Check, Camera
+  MessageCircle, Copy, Edit2, Trash2, FileText, Sparkles, Check, Camera,
+  ClipboardList, UploadCloud, ExternalLink, Search, File
 } from 'lucide-react';
 import { getLocalDateString } from '../utils/dateUtils';
 import { getStudentAvatar } from '../utils/avatarUtils';
@@ -35,9 +36,10 @@ const StudentProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { 
-    students, loadProgression, emotionalHistory, studentWorkouts,
+    students, loadProgression, emotionalHistory, studentWorkouts, studentDocuments,
     addLoad, addEmotionalScore, uploadEvaluationPhoto, uploadStudentAvatar, updateStudentFinance,
     updateStudent, addStudentWorkout, updateStudentWorkout, deleteStudentWorkout,
+    uploadStudentDocument, deleteStudentDocument,
     loading 
   } = useAppContext();
   
@@ -57,6 +59,18 @@ const StudentProfile = () => {
     exercises: [
       { id: '1', category: 'Peito', name: 'Supino Reto com Barra', sets: '4', reps: '10-12', notes: '' }
     ]
+  });
+
+  // Estados de Documentos e Saúde
+  const [isDocModalOpen, setIsDocModalOpen] = useState(false);
+  const [isUploadingDoc, setIsUploadingDoc] = useState(false);
+  const [docFilterCategory, setDocFilterCategory] = useState('Todos');
+  const [docSearchQuery, setDocSearchQuery] = useState('');
+  const [docFormData, setDocFormData] = useState({
+    title: '',
+    category: 'Exame',
+    notes: '',
+    file: null
   });
 
   // Estados de Avatar Real e WhatsApp
@@ -423,6 +437,101 @@ const StudentProfile = () => {
     setTimeout(() => setCopiedWorkoutId(null), 2500);
   };
 
+  // Handlers e dados da aba de Documentos e Saúde
+  const studentDocsList = (studentDocuments || []).filter(d => String(d.student_id) === String(student.id));
+
+  const filteredDocs = studentDocsList.filter(doc => {
+    const matchCategory = docFilterCategory === 'Todos' || doc.category === docFilterCategory;
+    const q = docSearchQuery.toLowerCase().trim();
+    const matchSearch = !q ||
+      (doc.title || '').toLowerCase().includes(q) ||
+      (doc.notes || '').toLowerCase().includes(q) ||
+      (doc.file_name || '').toLowerCase().includes(q);
+    return matchCategory && matchSearch;
+  });
+
+  const handleDocFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Formato inválido. Use apenas arquivos PDF, JPG, JPEG ou PNG.');
+      e.target.value = '';
+      return;
+    }
+
+    const maxBytes = 15 * 1024 * 1024; // 15 MB
+    if (file.size > maxBytes) {
+      toast.error('Arquivo muito pesado. O limite máximo é de 15MB.');
+      e.target.value = '';
+      return;
+    }
+
+    setDocFormData(prev => ({
+      ...prev,
+      file,
+      title: prev.title ? prev.title : file.name.replace(/\.[^/.]+$/, '')
+    }));
+  };
+
+  const handleSaveDocument = async (e) => {
+    e.preventDefault();
+    if (!docFormData.file) {
+      toast.error('Por favor, selecione um arquivo (PDF ou imagem).');
+      return;
+    }
+    if (!docFormData.title.trim()) {
+      toast.error('Informe um título para o documento.');
+      return;
+    }
+
+    setIsUploadingDoc(true);
+    toast.loading('Enviando e arquivando documento...', { id: 'doc-upload' });
+    try {
+      const res = await uploadStudentDocument(student.id, docFormData);
+      if (res) {
+        toast.success('Documento arquivado com segurança!', { id: 'doc-upload' });
+        setIsDocModalOpen(false);
+        setDocFormData({ title: '', category: 'Exame', notes: '', file: null });
+      } else {
+        toast.dismiss('doc-upload');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao arquivar documento.', { id: 'doc-upload' });
+    } finally {
+      setIsUploadingDoc(false);
+    }
+  };
+
+  const handleDeleteDoc = async (docId, docTitle) => {
+    if (window.confirm(`Deseja realmente excluir o documento "${docTitle}"?`)) {
+      await deleteStudentDocument(docId);
+    }
+  };
+
+  const formatDocSize = (bytes) => {
+    if (!bytes || bytes === 0) return 'Tamanho n/d';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
+
+  const formatDocDate = (dateStr) => {
+    if (!dateStr) return '';
+    try {
+      return new Date(dateStr).toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch {
+      return dateStr;
+    }
+  };
+
   return (
     <div className="profile-page fade-in-up">
       <header className="profile-header">
@@ -531,6 +640,9 @@ const StudentProfile = () => {
           <button className={`tab-btn ${activeTab === 'physical' ? 'active' : ''}`} onClick={() => setActiveTab('physical')}>
             <Ruler size={18} /> Avaliação Física
           </button>
+          <button className={`tab-btn ${activeTab === 'documents' ? 'active' : ''}`} onClick={() => setActiveTab('documents')}>
+            <ClipboardList size={18} /> Saúde & Anexos
+          </button>
           <button className={`tab-btn ${activeTab === 'finance' ? 'active' : ''}`} onClick={() => setActiveTab('finance')}>
             <DollarSign size={18} /> Financeiro
           </button>
@@ -565,7 +677,7 @@ const StudentProfile = () => {
 
             {studentWorkoutsList.length === 0 ? (
               <Card className="flex-center" style={{ minHeight: '300px', flexDirection: 'column', gap: '1rem', textAlign: 'center' }}>
-                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(0, 240, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-color)' }}>
+                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-color)' }}>
                   <FileText size={32} />
                 </div>
                 <div>
@@ -848,6 +960,144 @@ const StudentProfile = () => {
             </Card>
           </div>
         )}
+
+        {activeTab === 'documents' && (
+          <div className="tab-pane documents-tab fade-in-up">
+            <div className="documents-tab-header flex-between">
+              <div>
+                <h3 className="section-title">Acervo de Saúde & Documentos</h3>
+                <p className="section-subtitle">
+                  Exames laboratoriais, atestados médicos, relatórios e medicações arquivados com sigilo e segurança.
+                </p>
+              </div>
+              <button 
+                type="button" 
+                className="primary-button" 
+                onClick={() => {
+                  setDocFormData({ title: '', category: 'Exame', notes: '', file: null });
+                  setIsDocModalOpen(true);
+                }}
+              >
+                <Plus size={18} /> Anexar Documento
+              </button>
+            </div>
+
+            {/* Filtros e Busca */}
+            <div className="documents-filter-bar">
+              <div className="category-pills">
+                {['Todos', 'Exame', 'Atestado', 'Medicação', 'Relatório Médico', 'Outros'].map(cat => (
+                  <button
+                    key={cat}
+                    type="button"
+                    className={`category-pill ${docFilterCategory === cat ? 'active' : ''}`}
+                    onClick={() => setDocFilterCategory(cat)}
+                  >
+                    {cat}
+                    {cat === 'Todos' 
+                      ? ` (${studentDocsList.length})` 
+                      : ` (${studentDocsList.filter(d => d.category === cat).length})`
+                    }
+                  </button>
+                ))}
+              </div>
+
+              <div className="doc-search-box">
+                <Search size={16} className="search-icon" />
+                <input 
+                  type="text" 
+                  placeholder="Buscar por título, observação ou arquivo..." 
+                  value={docSearchQuery}
+                  onChange={e => setDocSearchQuery(e.target.value)}
+                  className="doc-search-input"
+                />
+              </div>
+            </div>
+
+            {/* Listagem de Documentos */}
+            {filteredDocs.length === 0 ? (
+              <Card className="empty-docs-card">
+                <div className="empty-docs-content">
+                  <div className="empty-docs-icon-badge">
+                    <ClipboardList size={36} />
+                  </div>
+                  <h4>Nenhum documento encontrado</h4>
+                  <p>
+                    {studentDocsList.length === 0
+                      ? 'Nenhum exame, atestado ou laudo foi anexado para este aluno ainda.'
+                      : 'Nenhum documento corresponde ao filtro ou busca selecionada.'}
+                  </p>
+                  <button 
+                    type="button" 
+                    className="primary-button"
+                    style={{ marginTop: '1rem' }}
+                    onClick={() => {
+                      setDocFormData({ title: '', category: 'Exame', notes: '', file: null });
+                      setIsDocModalOpen(true);
+                    }}
+                  >
+                    <Plus size={18} /> Anexar Primeiro Documento
+                  </button>
+                </div>
+              </Card>
+            ) : (
+              <div className="documents-grid">
+                {filteredDocs.map(doc => {
+                  const isPdf = (doc.file_type || '').toLowerCase() === 'pdf' || (doc.file_name || '').toLowerCase().endsWith('.pdf');
+                  return (
+                    <div key={doc.id} className="doc-card">
+                      <div className="doc-card-top">
+                        <div className={`doc-type-badge ${isPdf ? 'pdf' : 'img'}`}>
+                          {isPdf ? <FileText size={18} /> : <File size={18} />}
+                          <span>{isPdf ? 'PDF' : (doc.file_type || 'IMG').toUpperCase()}</span>
+                        </div>
+                        <span className={`doc-category-tag cat-${(doc.category || 'outros').toLowerCase().replace(/[^a-z0-9]/g, '-')}`}>
+                          {doc.category || 'Exame'}
+                        </span>
+                      </div>
+
+                      <div className="doc-card-body">
+                        <h4 className="doc-card-title" title={doc.title}>{doc.title}</h4>
+                        <p className="doc-filename-sub" title={doc.file_name}>
+                          {doc.file_name}
+                        </p>
+                        {doc.notes && (
+                          <p className="doc-card-notes">
+                            "{doc.notes}"
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="doc-card-meta">
+                        <span>📅 {formatDocDate(doc.created_at)}</span>
+                        <span>📦 {formatDocSize(doc.file_size)}</span>
+                      </div>
+
+                      <div className="doc-card-actions">
+                        <a 
+                          href={doc.file_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="doc-action-btn view-btn"
+                          title="Abrir ou baixar arquivo em nova aba"
+                        >
+                          <ExternalLink size={15} /> Visualizar
+                        </a>
+                        <button 
+                          type="button" 
+                          className="doc-action-btn delete-btn"
+                          onClick={() => handleDeleteDoc(doc.id, doc.title)}
+                          title="Excluir documento"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <Modal isOpen={isLoadModalOpen} onClose={() => setIsLoadModalOpen(false)} title="Adicionar Carga">
@@ -1083,6 +1333,104 @@ const StudentProfile = () => {
               style={{ background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)', color: '#05050A', fontWeight: '700' }}
             >
               <Check size={16} /> Salvar WhatsApp
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal de Anexo de Documentos de Saúde */}
+      <Modal 
+        isOpen={isDocModalOpen} 
+        onClose={() => !isUploadingDoc && setIsDocModalOpen(false)} 
+        title="Anexar Documento de Saúde"
+        maxWidth="580px"
+      >
+        <form onSubmit={handleSaveDocument} className="doc-upload-form">
+          <div className="form-group">
+            <label>Arquivo do Documento (PDF, JPEG, JPG ou PNG) *</label>
+            <div className="doc-file-dropzone">
+              <input 
+                id="doc-file-input"
+                type="file" 
+                accept="application/pdf,image/jpeg,image/jpg,image/png,image/webp" 
+                onChange={handleDocFileSelect}
+                style={{ display: 'none' }}
+                disabled={isUploadingDoc}
+              />
+              <label htmlFor="doc-file-input" className="doc-dropzone-label">
+                <UploadCloud size={32} className="dropzone-icon" />
+                {docFormData.file ? (
+                  <div className="selected-file-info">
+                    <strong style={{ color: 'var(--accent-color)' }}>{docFormData.file.name}</strong>
+                    <span>{formatDocSize(docFormData.file.size)} - Clique para trocar de arquivo</span>
+                  </div>
+                ) : (
+                  <div className="dropzone-text">
+                    <strong>Clique para selecionar o documento</strong>
+                    <span>Formatos aceitos: PDF, JPEG, JPG ou PNG (Máximo 15MB)</span>
+                  </div>
+                )}
+              </label>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Título / Identificação do Documento *</label>
+            <input 
+              required
+              type="text" 
+              className="form-input" 
+              value={docFormData.title} 
+              onChange={e => setDocFormData({ ...docFormData, title: e.target.value })} 
+              placeholder="Ex: Hemograma Completo - Março 2026 / Laudo Cardiológico"
+              disabled={isUploadingDoc}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Categoria do Documento</label>
+            <select 
+              className="form-input"
+              value={docFormData.category}
+              onChange={e => setDocFormData({ ...docFormData, category: e.target.value })}
+              disabled={isUploadingDoc}
+            >
+              <option value="Exame">Exame Laboratorial / Imagem</option>
+              <option value="Atestado">Atestado Médico / Aptidão</option>
+              <option value="Medicação">Prescrição / Medicação em Uso</option>
+              <option value="Relatório Médico">Relatório / Laudo Médico</option>
+              <option value="Outros">Outros Documentos</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Observações / Recomendações Clínicas (Opcional)</label>
+            <textarea 
+              className="form-input" 
+              rows={3} 
+              value={docFormData.notes} 
+              onChange={e => setDocFormData({ ...docFormData, notes: e.target.value })} 
+              placeholder="Ex: Liberado para musculação e aeróbico; Atenção para repetições no joelho esquerdo."
+              disabled={isUploadingDoc}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem', justifyContent: 'flex-end' }}>
+            <button 
+              type="button" 
+              className="secondary-button" 
+              onClick={() => setIsDocModalOpen(false)}
+              disabled={isUploadingDoc}
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              className="primary-button" 
+              disabled={isUploadingDoc || !docFormData.file}
+              style={{ minWidth: '170px', justifyContent: 'center' }}
+            >
+              {isUploadingDoc ? 'Enviando...' : 'Arquivar Documento'}
             </button>
           </div>
         </form>

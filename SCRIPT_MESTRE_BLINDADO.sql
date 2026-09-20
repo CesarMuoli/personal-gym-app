@@ -118,6 +118,28 @@ BEGIN
     END IF;
 END $$;
 
+-- Tabela: student_documents (Acervo de Saúde: Exames, Atestados, Medicações, Relatórios)
+CREATE TABLE IF NOT EXISTS public.student_documents (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id) DEFAULT auth.uid(),
+    student_id BIGINT REFERENCES public.students(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'Exame',
+    file_url TEXT NOT NULL,
+    file_name TEXT NOT NULL,
+    file_type TEXT NOT NULL, -- pdf, jpg, jpeg, png
+    file_size BIGINT DEFAULT 0,
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='student_documents' AND column_name='user_id' AND table_schema='public') THEN
+        ALTER TABLE public.student_documents ADD COLUMN user_id UUID REFERENCES auth.users(id) DEFAULT auth.uid();
+    END IF;
+END $$;
+
 -- Tabela: financial_goals (Metas Financeiras por Professor)
 CREATE TABLE IF NOT EXISTS public.financial_goals (
     id BIGSERIAL PRIMARY KEY,
@@ -166,6 +188,7 @@ ALTER TABLE public.calendar_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.load_progression ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.emotional_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.student_workouts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.student_documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.financial_goals ENABLE ROW LEVEL SECURITY;
 
 -- ------------------------------------------------------------------------------
@@ -207,6 +230,13 @@ ON public.student_workouts FOR ALL TO authenticated
 USING (auth.uid() = user_id)
 WITH CHECK (auth.uid() = user_id);
 
+-- student_documents (Acervo de Saúde)
+DROP POLICY IF EXISTS "MultiTenant: Acesso aos proprios documentos" ON public.student_documents;
+CREATE POLICY "MultiTenant: Acesso aos proprios documentos"
+ON public.student_documents FOR ALL TO authenticated
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
 -- financial_goals
 DROP POLICY IF EXISTS "MultiTenant: Acesso as proprias metas" ON public.financial_goals;
 CREATE POLICY "MultiTenant: Acesso as proprias metas"
@@ -223,10 +253,12 @@ CREATE INDEX IF NOT EXISTS idx_load_progression_user_id ON public.load_progressi
 CREATE INDEX IF NOT EXISTS idx_emotional_history_user_id ON public.emotional_history(user_id);
 CREATE INDEX IF NOT EXISTS idx_student_workouts_user_id ON public.student_workouts(user_id);
 CREATE INDEX IF NOT EXISTS idx_student_workouts_student_id ON public.student_workouts(student_id);
+CREATE INDEX IF NOT EXISTS idx_student_documents_user_id ON public.student_documents(user_id);
+CREATE INDEX IF NOT EXISTS idx_student_documents_student_id ON public.student_documents(student_id);
 CREATE INDEX IF NOT EXISTS idx_financial_goals_user_id ON public.financial_goals(user_id);
 
 -- ------------------------------------------------------------------------------
--- 5. STORAGE BUCKET PARA AVALIAÇÕES FÍSICAS (FOTOS ANTES/DEPOIS)
+-- 5. STORAGE BUCKET PARA AVALIAÇÕES FÍSICAS E DOCUMENTOS DE SAÚDE
 -- ------------------------------------------------------------------------------
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('evaluations', 'evaluations', true)
@@ -265,5 +297,5 @@ SELECT
     rowsecurity AS rls_ativo
 FROM pg_tables 
 WHERE schemaname = 'public' 
-AND tablename IN ('students', 'calendar_events', 'load_progression', 'emotional_history', 'student_workouts', 'financial_goals');
+AND tablename IN ('students', 'calendar_events', 'load_progression', 'emotional_history', 'student_workouts', 'student_documents', 'financial_goals');
 

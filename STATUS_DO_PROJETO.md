@@ -2,78 +2,70 @@
 
 > **Data da Última Auditoria:** 19 de Setembro de 2026  
 > **Status Geral:** 🟢 100% Funcional, Blindado para 100+ Usuários, Compilando com 0 Erros  
+> **Identidade Visual:** 💼 SaaS B2B Executivo (Laranja Vibrante `#FF5722`, Fundo Sólido `#121212`, Cards `#1E1E1E`, Verde Sucesso `#00C853`)  
 > **Repositório GitHub:** [https://github.com/CesarMuoli/personal-gym-app](https://github.com/CesarMuoli/personal-gym-app) (`branch: main`)  
 > **Hospedagem / Deploy:** Render (Auto-deploy sincronizado a cada push)
 
 ---
 
-## 🛡️ 1. Relatório da Auditoria Geral (Todas as Áreas)
+## 🛡️ 1. Relatório da Auditoria Geral de Cibersegurança & Qualidade
 
-Realizamos uma auditoria minuciosa, crítica e recursiva em todos os subsistemas do aplicativo. Abaixo está o parecer técnico detalhado:
+Realizamos uma auditoria minuciosa, crítica e recursiva em todos os subsistemas do aplicativo:
 
 ### A. Segurança & Autenticação (Multi-Tenant) — 100% Aprovado
-- **Isolamento de Sessão:** Cada Personal Trainer possui seu próprio UID no Supabase Auth. Todas as chamadas de banco de dados (`select`, `insert`, `update`, `delete`) injetam explicitamente `user_id = session.user.id`.
-- **Row Level Security (RLS):** As 6 tabelas do sistema (`students`, `calendar_events`, `load_progression`, `emotional_history`, `student_workouts`, `financial_goals`) possuem políticas ativas onde `auth.uid() = user_id`. Mesmo que ocorram requisições manuais via API, o PostgreSQL bloqueia fisicamente o acesso a dados de outros usuários.
-- **Storage Seguro:** Fotos de avaliação física são enviadas para o bucket `evaluations` sob pastas isoladas por usuário (`{userId}/{studentId}_{type}_{timestamp}.ext`), com políticas RLS dedicadas.
-- **Limpeza de Memória no Logout:** Ao deslogar (`signOut`), o estado do React zera imediatamente todos os vetores de memória (`students`, `calendarEvents`, `loadProgression`, `emotionalHistory`, `financialGoals`, `studentWorkouts`), impedindo vazamento de tela residual no navegador.
+- **Isolamento de Sessão por Personal Trainer:** Cada Personal Trainer possui seu próprio UID no Supabase Auth. Todas as chamadas de banco de dados (`select`, `insert`, `update`, `delete`) injetam explicitamente `.eq('user_id', session.user.id)`.
+- **Row Level Security (RLS) Ativo:** Todas as **7 tabelas** do sistema (`students`, `calendar_events`, `load_progression`, `emotional_history`, `student_workouts`, `financial_goals`, `student_documents`) possuem políticas RLS ativas no PostgreSQL (`auth.uid() = user_id`). Mesmo com acesso direto à API REST do Supabase com chave anônima, é matematicamente impossível um personal consultar ou modificar dados de outro.
+- **Storage Seguro & Isolamento de Arquivos:** Documentos médicos e fotos de avaliação física são enviados para o bucket `evaluations` sob o caminho segregado `{userId}/documents/{documentId}_{filename}` e `{userId}/{studentId}_{type}_{timestamp}.ext`. Políticas de Storage garantem que apenas o proprietário do arquivo possa ler ou deletar.
+- **Validação de MIME Type & Limites:** Uploads são estritamente filtrados no cliente e no servidor. Apenas extensões e tipos MIME seguros (`application/pdf`, `image/jpeg`, `image/jpg`, `image/png`, `image/webp`) são permitidos até 15MB. Arquivos executáveis (`.exe`), scripts (`.js`, `.html`) ou vetores SVG com potencial XSS são rigorosamente bloqueados.
+- **Limpeza de Memória no Logout (`signOut`):** Ao deslogar, o estado do React zera imediatamente todos os vetores de memória (`students`, `calendarEvents`, `loadProgression`, `emotionalHistory`, `financialGoals`, `studentWorkouts`, `studentDocuments`), prevenindo qualquer vazamento de dados residuais na máquina compartilhada.
 
 ### B. Banco de Dados & Escalabilidade — 100% Aprovado
-- **Script Mestre Blindado:** Criado e commitado o arquivo [`SCRIPT_MESTRE_BLINDADO.sql`](file:///c:/Projetos/antigravity/personal-gym/SCRIPT_MESTRE_BLINDADO.sql).
-- **Auto-Increment & Sequências:** Configurado `BIGSERIAL` e `gen_random_uuid()` para chaves primárias. O erro que travou o segundo usuário no passado (`null value in column id violates not-null constraint`) foi neutralizado tanto a nível de SQL quanto por geração de ID numérico dinâmico no frontend.
-- **Índices de Performance:** Criados índices B-tree em todas as colunas `user_id` e `student_id` (`idx_students_user_id`, `idx_calendar_events_user_id`, etc.), garantindo tempos de resposta sub-milissegundo mesmo com centenas de milhares de linhas.
-- **Exclusão em Cascata (ON DELETE CASCADE):** Ao excluir um aluno, treinos, eventos de agenda, cargas e notas emocionais vinculadas são removidos de forma limpa, sem deixar registros órfãos.
+- **Script Mestre Atualizado:** Arquivo [`SCRIPT_MESTRE_BLINDADO.sql`](file:///c:/Projetos/antigravity/personal-gym/SCRIPT_MESTRE_BLINDADO.sql) expandido para incluir a tabela `student_documents`, constraints `ON DELETE CASCADE`, RLS e índices B-tree dedicados (`idx_student_documents_user_id`, `idx_student_documents_student_id`).
+- **Auto-Increment & Sequências:** Configurado `BIGSERIAL` e `gen_random_uuid()` para chaves primárias. O erro de `null value in column id violates not-null constraint` foi neutralizado tanto a nível de SQL quanto por geração de ID numérico dinâmico no frontend.
+- **Exclusão em Cascata (`ON DELETE CASCADE`):** Ao remover um aluno, documentos, fichas de treino, agendamentos, cargas e notas emocionais vinculadas são removidos de forma limpa, sem deixar registros órfãos.
 
-### C. Frontend & Qualidade de Código (React + Vite) — 100% Aprovado
-- **Build de Produção:** Vite build concluído em ~1.5s com código minificado e otimizado.
+### C. Qualidade de Código & Build — 100% Aprovado
+- **Build de Produção:** Vite build concluído em ~1.6s com código minificado e otimizado.
 - **Linter (oxlint):** 0 erros no projeto inteiro.
-- **Tripla Camada de Persistência:** Metas financeiras são gravadas simultaneamente no `user_metadata` do Auth, na tabela `financial_goals` e no estado otimista do React.
-- **Sanitização de Tipos:** Conversão segura de IDs numéricos e strings (`parseInt`, `String(...)`), prevenindo falhas de tipo entre PostgreSQL (`BIGINT`) e URLs (`useParams`).
-
-### D. UI/UX & Responsividade — 100% Aprovado
-- **Fim do Corte de Janela nos Modais:** Redesenhamos o componente [`Modal.jsx`](file:///c:/Projetos/antigravity/personal-gym/src/components/UI/Modal.jsx) e o [`UI.css`](file:///c:/Projetos/antigravity/personal-gym/src/components/UI/UI.css). Agora o modal adota `display: flex; flex-direction: column; max-height: 90vh;` com cabeçalho fixo, corpo rolável (`.modal-body`), scrollbar neon sutil e suporte a larguras dinâmicas (`maxWidth="560px"` em Alunos e `maxWidth="780px"` no Construtor de Treinos).
-- **Cards Clicáveis no Dashboard:** Os 3 cards superiores do Dashboard agora possuem cursor pointer, feedback visual ao passar o mouse e navegação direta para suas respectivas telas (Alunos e Agenda).
-- **Identidade Cromática Tech Neon:** Dark mode absoluto (`#05050A`, `#0A0F1C`) com acentos em ciano neon (`#00F0FF`), roxo elétrico (`#8B5CF6`) e verde esmeralda (`#10B981`).
-
-### E. Lógica de Negócios & Cálculos — 100% Aprovado
-- **Cálculo de Metas e Prazos:** Dias restantes calculados corretamente de acordo com o calendário vigente (mês atual vs semestre atual com término exato em 30 de Junho ou 31 de Dezembro).
-- **Progresso de Metas:** Medido exclusivamente sobre a receita já realizada (`paidTotal`), e não sobre valores pendentes.
-- **Fichas de Treino & WhatsApp:** Geração instantânea de mensagem estruturada com emojis, orientações, séries, repetições e observações, com botão direto para envio via WhatsApp Web/App e cópia para área de transferência.
+- **Persistência Robusta:** Metas financeiras e documentos contam com persistência tripla e atualizações otimistas no React para feedback instantâneo de interface.
 
 ---
 
 ## 🚀 2. O Que Fizemos Hoje (19/09/2026)
 
-1. **Correção e Blindagem dos Cálculos Financeiros:**
-   - Corrigida a divergência no cálculo dos dias restantes para metas (mês vs semestre).
-   - As metas agora refletem a receita recebida real do mês e indicam a previsão total.
-   - Adicionada opção de reverter pagamentos caso o personal dê baixa por engano.
+### 1. Novo Módulo: "Saúde & Anexos" no Perfil do Aluno (`StudentProfile.jsx`)
+- **Acervo de Documentos:** Aba exclusiva para arquivar exames de sangue, atestados médicos, receitas, prescrições de medicações e relatórios clínicos de cada aluno.
+- **Suporte a Formatos:** Permite arquivos PDF, JPEG, JPG, PNG e WEBP com limite de até 15MB por arquivo.
+- **Filtros e Busca:** Abas de categoria rápida ("Todos", "Exame", "Atestado", "Medicação", "Relatório Médico", "Outros") e barra de busca instantânea por título ou observação.
+- **Visualização & Download:** Botão direto para abrir o arquivo em nova aba com URL segura e opção de exclusão com confirmação.
+- **Multi-Tenant Total:** Cada Personal Trainer acessa apenas a documentação médica dos seus próprios alunos.
 
-2. **Telas Flutuantes do Dashboard Clicáveis:**
-   - Os cards de "Alunos Ativos", "Aulas Hoje" e "Avaliações Pendentes" tornaram-se interativos com redirecionamento de 1 clique para as telas de Alunos e Agenda.
+### 2. Redesign Global: Sistema de Gestão Profissional (SaaS B2B)
+Atualizamos toda a interface global de acordo com as diretrizes B2B executivas:
+- **Cores Gerais e Fundo:** 
+  - Fundo principal: tom escuro neutro e sólido (`#121212`).
+  - Contêineres, painéis e cards: cinza chumbo escuro (`#1E1E1E`) com bordas discretas (`#2A2A2A`).
+  - Fim de todos os gradientes roxos, azuis e cianos neon.
+- **Cores de Destaque:** 
+  - Laranja Vibrante (`#FF5722`) para CTAs primários, estados ativos e ícones em foco.
+  - Verde Sucesso (`#00C853`) para indicadores financeiros positivos e confirmações.
+- **Menu Lateral (Sidebar):** 
+  - Item ativo: borda esquerda sólida de 3px em `#FF5722`, texto/ícone em `#FF5722`, fundo suave com 12% de opacidade (`rgba(255, 87, 34, 0.12)`).
+  - Itens inativos: tom cinza neutro (`#A0A0A0`) com transição suave no hover.
+  - Logotipo: texto branco sólido com detalhe em `#FF5722`.
+- **Abas Horizontais de Navegação:**
+  - Design limpo de abas sublinhadas.
+  - Aba ativa: texto em branco sólido (`#FFFFFF`) com borda inferior sólida de 3px em `#FF5722`.
+  - Abas inativas: tom cinza (`#757575`) que clareia para `#B0B0B0` no hover, sem formato de pílula ou bordas neon.
+- **Cards e Modais:**
+  - Cantos arredondados profissionais (8px a 12px), sombras sutis e sem cortes de tela.
 
-3. **Resolução da Janela de Cadastro Cortada:**
-   - O modal de alunos e treinos foi corrigido com scroll interno fluido e largura proporcional, eliminando qualquer corte em monitores, notebooks ou tablets.
+### 3. Fichas de Treino com Envio via WhatsApp
+- Aba "Fichas de Treino" com montagem por grupos musculares, repetições, séries e orientações.
+- Botão "Enviar Treino WhatsApp" para abrir conversa já formatada com emojis e detalhes do treino.
 
-4. **Novo Módulo Completo: Fichas de Treino com Envio via WhatsApp:**
-   - Aba **"Fichas de Treino"** no perfil do aluno (`StudentProfile.jsx`).
-   - Construtor com seleção de categorias (Peito, Costas, Pernas, etc.), exercícios populares com auto-preenchimento, número de séries, repetições e observações.
-   - Botão **"Enviar Treino WhatsApp"** (abre conversa pronta com o aluno) e **"Copiar Texto"**.
-
-5. **Blindagem Multi-Tenant para 100+ Usuários Simultâneos:**
-   - Diagnóstico da falha na tabela `financial_goals` para usuários novos (ausência de sequence no Postgres).
-   - Criação da persistência em **Tripla Camada** (`AppContext.jsx`): grava em `user_metadata` + banco com geração de ID dinâmico + local state.
-   - Criação do script definitivo [`SCRIPT_MESTRE_BLINDADO.sql`](file:///c:/Projetos/antigravity/personal-gym/SCRIPT_MESTRE_BLINDADO.sql) com RLS, sequences, constraints e storage bucket.
-
-6. **Fotos Reais no Perfil dos Alunos (Upload de Avatar + Catálogo HD):**
-   - Criada a função `uploadStudentAvatar(studentId, file)` no `AppContext.jsx` vinculada ao Supabase Storage no bucket `evaluations`.
-   - Botão interativo de câmera sobre o avatar no cabeçalho do perfil do aluno (`StudentProfile.jsx`) e no modal de edição (`Students.jsx`).
-   - Criado `avatarUtils.js` com catálogo de fotos reais de alta definição (atletas/musculação), eliminando de vez links quebrados ou avatares em desenho do pravatar.cc.
-
-7. **Link Direto de WhatsApp Pessoal ao Lado da Foto:**
-   - Botão em destaque em verde WhatsApp (`#25D366`) com efeito glow neon ao lado da foto e nome do aluno no perfil.
-   - 1 clique abre diretamente a conversa no WhatsApp Web ou App do celular com o número correto e saudação inicial pronta.
-   - Opção de cadastrar/editar o número em 1 clique se o aluno ainda não tiver telefone salvo.
-   - Atalho de WhatsApp adicionado também diretamente nos cards da listagem de alunos (`Students.jsx`).
+### 4. Gestão Financeira com Metas e Prazos
+- Métricas de faturamento recebido x pendente, dias restantes calculados corretamente e reversão de baixa de pagamento.
 
 ---
 
@@ -81,29 +73,35 @@ Realizamos uma auditoria minuciosa, crítica e recursiva em todos os subsistemas
 
 | Arquivo | Função Principal |
 | :--- | :--- |
-| [`src/context/AppContext.jsx`](file:///c:/Projetos/antigravity/personal-gym/src/context/AppContext.jsx) | Estado global, persistência tripla, multi-tenant e todas as chamadas ao Supabase. |
-| [`src/pages/Finance.jsx`](file:///c:/Projetos/antigravity/personal-gym/src/pages/Finance.jsx) | Gestão financeira, 3 colunas de pagamentos, metas com timers regressivos. |
-| [`src/pages/Dashboard.jsx`](file:///c:/Projetos/antigravity/personal-gym/src/pages/Dashboard.jsx) | Painel com cards clicáveis, médias reais e gráfico emocional diário. |
-| [`src/pages/StudentProfile.jsx`](file:///c:/Projetos/antigravity/personal-gym/src/pages/StudentProfile.jsx) | Perfil completo do aluno, evolução de cargas, fotos antes/depois e fichas de treino. |
+| [`src/context/AppContext.jsx`](file:///c:/Projetos/antigravity/personal-gym/src/context/AppContext.jsx) | Estado global, multi-tenant, métodos de documentos médicos e chamadas ao Supabase. |
+| [`src/pages/StudentProfile.jsx`](file:///c:/Projetos/antigravity/personal-gym/src/pages/StudentProfile.jsx) | Perfil com abas sublinhadas: Treinos, Cargas, Fotos, Fichas de Treino e Saúde & Anexos. |
+| [`src/pages/StudentProfile.css`](file:///c:/Projetos/antigravity/personal-gym/src/pages/StudentProfile.css) | Estilização das abas sublinhadas, acervo de documentos e dropzone de upload. |
+| [`src/pages/Finance.jsx`](file:///c:/Projetos/antigravity/personal-gym/src/pages/Finance.jsx) | Gestão financeira, 3 colunas de pagamentos, metas com cores SaaS (#00C853 e #FF5722). |
+| [`src/pages/Dashboard.jsx`](file:///c:/Projetos/antigravity/personal-gym/src/pages/Dashboard.jsx) | Painel B2B com cards clicáveis, médias reais e gráfico emocional diário. |
 | [`src/pages/Students.jsx`](file:///c:/Projetos/antigravity/personal-gym/src/pages/Students.jsx) | Listagem, busca, ordenação (A-Z) e modais responsivos de cadastro/edição. |
 | [`src/pages/Calendar.jsx`](file:///c:/Projetos/antigravity/personal-gym/src/pages/Calendar.jsx) | Agenda mensal interativa, gaveta de eventos e novos agendamentos. |
-| [`src/components/UI/Modal.jsx`](file:///c:/Projetos/antigravity/personal-gym/src/components/UI/Modal.jsx) | Modal responsivo sem cortes com suporte a largura dinâmica. |
-| [`src/utils/avatarUtils.js`](file:///c:/Projetos/antigravity/personal-gym/src/utils/avatarUtils.js) | Catálogo de retratos reais em HD e resolvedor inteligente de avatares. |
-| [`src/utils/phoneUtils.js`](file:///c:/Projetos/antigravity/personal-gym/src/utils/phoneUtils.js) | Formatação de telefones com DDD e gerador de links diretos para o WhatsApp. |
-| [`SCRIPT_MESTRE_BLINDADO.sql`](file:///c:/Projetos/antigravity/personal-gym/SCRIPT_MESTRE_BLINDADO.sql) | Script SQL para rodar no Supabase que aplica RLS e sequences em 100% das tabelas. |
+| [`src/components/Sidebar.jsx`](file:///c:/Projetos/antigravity/personal-gym/src/components/Sidebar.jsx) & [`Sidebar.css`](file:///c:/Projetos/antigravity/personal-gym/src/components/Sidebar.css) | Menu lateral B2B com borda esquerda de 3px em #FF5722 e logo executivo. |
+| [`src/components/UI/UI.css`](file:///c:/Projetos/antigravity/personal-gym/src/components/UI/UI.css) | Design system global: botões #FF5722, cards #1E1E1E, bordas #2A2A2A. |
+| [`SCRIPT_MESTRE_BLINDADO.sql`](file:///c:/Projetos/antigravity/personal-gym/SCRIPT_MESTRE_BLINDADO.sql) | Script SQL definitivo que aplica RLS, sequences e tabelas para 100% dos recursos. |
 
 ---
 
-## 🌅 4. Onde Procurar Este Resumo e Como Retomar Amanhã
+## ⚡ 4. Instrução Importante para o Banco de Dados (Supabase)
+
+Para ativar a nova tabela de documentos no seu banco do Supabase, basta:
+1. Abrir o painel do Supabase (`SQL Editor`).
+2. Copiar o conteúdo do arquivo [`SCRIPT_MESTRE_BLINDADO.sql`](file:///c:/Projetos/antigravity/personal-gym/SCRIPT_MESTRE_BLINDADO.sql) (ou apenas a seção `7. TABELA: student_documents`).
+3. Clicar em **Run**.
+
+---
+
+## 🌅 5. Onde Procurar Este Resumo e Como Retomar
 
 ### 📍 Onde este resumo está salvo:
-Este documento está salvo na pasta raiz do projeto com o nome:  
 👉 **`STATUS_DO_PROJETO.md`**  
 Caminho completo: `c:\Projetos\antigravity\personal-gym\STATUS_DO_PROJETO.md`
 
-### 💬 O que falar para a IA amanhã ao iniciar o chat:
+### 💬 O que falar para a IA ao iniciar o chat:
 Basta copiar e colar a mensagem abaixo:
 
 > **"Olá! Leia o arquivo STATUS_DO_PROJETO.md para recapitular onde paramos e vamos continuar a partir daí."**
-
-Assim que você enviar essa frase, a IA lerá este relatório imediatamente e continuará o desenvolvimento exatamente de onde você parou, sem perda de contexto!

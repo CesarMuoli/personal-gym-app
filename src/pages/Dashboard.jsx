@@ -73,7 +73,7 @@ const Dashboard = () => {
           onClick={() => navigate('/students')}
           aria-label="Clique para ir para Gestão de Alunos"
         >
-          <div className="stat-icon" style={{ backgroundColor: 'rgba(139, 92, 246, 0.2)', color: 'var(--accent-color)' }}>
+          <div className="stat-icon" style={{ backgroundColor: 'var(--accent-soft)', color: 'var(--accent-color)' }}>
             <Users size={24} />
           </div>
           <div className="stat-info">

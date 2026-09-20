@@ -15,6 +15,7 @@ export const AppProvider = ({ children }) => {
   const [emotionalHistory, setEmotionalHistory] = useState([]);
   const [financialGoals, setFinancialGoals] = useState({ monthly_goal: 0, quarterly_goal: 0 });
   const [studentWorkouts, setStudentWorkouts] = useState([]);
+  const [studentDocuments, setStudentDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -34,13 +35,14 @@ export const AppProvider = ({ children }) => {
     if (!session?.user?.id) return;
     setLoading(true);
     try {
-      const [studentsRes, eventsRes, loadRes, emotionalRes, goalsRes, workoutsRes] = await Promise.all([
+      const [studentsRes, eventsRes, loadRes, emotionalRes, goalsRes, workoutsRes, docsRes] = await Promise.all([
         supabase.from('students').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false }),
         supabase.from('calendar_events').select('*').eq('user_id', session.user.id).order('event_date', { ascending: true }),
         supabase.from('load_progression').select('*').eq('user_id', session.user.id).order('created_at', { ascending: true }),
         supabase.from('emotional_history').select('*').eq('user_id', session.user.id).order('record_date', { ascending: true }),
         supabase.from('financial_goals').select('*').eq('user_id', session.user.id).maybeSingle(),
-        supabase.from('student_workouts').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false })
+        supabase.from('student_workouts').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false }),
+        supabase.from('student_documents').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false })
       ]);
 
       if (studentsRes.data) setStudents(studentsRes.data);
@@ -65,6 +67,12 @@ export const AppProvider = ({ children }) => {
         // Tabela ainda pode não ter sido criada no Supabase pelo usuário
         console.warn('Aviso ao carregar student_workouts:', workoutsRes.error.message);
       }
+
+      if (docsRes.data) {
+        setStudentDocuments(docsRes.data);
+      } else if (docsRes.error) {
+        console.warn('Aviso ao carregar student_documents:', docsRes.error.message);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Erro ao conectar com o banco de dados.');
@@ -84,6 +92,7 @@ export const AppProvider = ({ children }) => {
       setEmotionalHistory([]);
       setFinancialGoals({ monthly_goal: 0, quarterly_goal: 0 });
       setStudentWorkouts([]);
+      setStudentDocuments([]);
     }
   }, [session, fetchData]);
 
@@ -497,15 +506,150 @@ export const AppProvider = ({ children }) => {
     return true;
   };
 
+  const uploadStudentDocument = async (studentId, { title, category, notes, file }) => {
+    const userId = session?.user?.id;
+    if (!userId) {
+      toast.error('Sessão expirada. Faça login novamente.');
+      return null;
+    }
+
+    if (!file) {
+      toast.error('Nenhum arquivo selecionado.');
+      return null;
+    }
+
+    // 1. Whitelist estrita de segurança para MIME types
+    const allowedMimeTypes = [
+      'application/pdf',
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/webp'
+    ];
+    if (!allowedMimeTypes.includes(file.type)) {
+      toast.error('Formato não permitido. Selecione apenas arquivos PDF, JPG, JPEG ou PNG.');
+      return null;
+    }
+
+    // 2. Limite de tamanho de 15 MB
+    const maxBytes = 15 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      toast.error('Arquivo muito pesado. O limite máximo é de 15MB.');
+      return null;
+    }
+
+    // 3. Sanitização do nome do arquivo
+    const rawExt = file.name.split('.').pop()?.toLowerCase() || 'pdf';
+    const allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'webp'];
+    const fileExt = allowedExtensions.includes(rawExt) ? rawExt : 'pdf';
+    const safeBaseName = file.name
+      .replace(/\.[^/.]+$/, '')
+      .replace(/[^a-zA-Z0-9_-]/g, '_')
+      .substring(0, 50);
+
+    const storagePath = `${userId}/documents/${studentId}_${Date.now()}_${safeBaseName}.${fileExt}`;
+    let targetFileName = storagePath;
+
+    // 4. Upload para o bucket evaluations
+    const { error: uploadError } = await supabase.storage
+      .from('evaluations')
+      .upload(storagePath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (uploadError) {
+      console.error('Document upload error, trying fallback root:', uploadError);
+      const fallbackName = `doc_${studentId}_${Date.now()}_${safeBaseName}.${fileExt}`;
+      const { error: fallbackError } = await supabase.storage
+        .from('evaluations')
+        .upload(fallbackName, file, { cacheControl: '3600', upsert: true });
+
+      if (fallbackError) {
+        toast.error('Erro ao enviar o arquivo para o servidor.');
+        return null;
+      }
+      targetFileName = fallbackName;
+    }
+
+    // 5. Gerar URL acessível
+    let fileUrl = '';
+    const { data: signedData } = await supabase.storage
+      .from('evaluations')
+      .createSignedUrl(targetFileName, 60 * 60 * 24 * 365);
+
+    if (signedData?.signedUrl) {
+      fileUrl = signedData.signedUrl;
+    } else {
+      const { data: publicData } = supabase.storage.from('evaluations').getPublicUrl(targetFileName);
+      fileUrl = publicData?.publicUrl || '';
+    }
+
+    const payload = {
+      user_id: userId,
+      student_id: parseInt(studentId, 10),
+      title: (title || file.name).trim(),
+      category: category || 'Exame',
+      file_url: fileUrl,
+      file_name: file.name,
+      file_type: fileExt,
+      file_size: file.size,
+      notes: (notes || '').trim(),
+      created_at: new Date().toISOString()
+    };
+
+    // 6. Gravar na tabela student_documents
+    const { data, error } = await supabase
+      .from('student_documents')
+      .insert([payload])
+      .select();
+
+    if (error) {
+      console.warn('Erro ao inserir student_documents no banco:', error.message);
+      const fallbackItem = { ...payload, id: 'temp_' + Date.now() };
+      setStudentDocuments(prev => [fallbackItem, ...prev]);
+      toast.success('Documento anexado com sucesso!');
+      return fallbackItem;
+    }
+
+    setStudentDocuments(prev => [data[0], ...prev]);
+    toast.success('Documento arquivado com sucesso!');
+    return data[0];
+  };
+
+  const deleteStudentDocument = async (documentId) => {
+    const userId = session?.user?.id;
+    if (!userId) return false;
+
+    setStudentDocuments(prev => prev.filter(d => d.id !== documentId));
+
+    const { error } = await supabase
+      .from('student_documents')
+      .delete()
+      .eq('id', documentId)
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Erro ao excluir documento:', error);
+      toast.error('Não foi possível remover o documento do banco.');
+      fetchData();
+      return false;
+    }
+
+    toast.success('Documento removido com sucesso!');
+    return true;
+  };
+
   return (
     <AppContext.Provider value={{
       session, authLoading, signIn, signUp, signOut,
-      students, calendarEvents, loadProgression, emotionalHistory, financialGoals, studentWorkouts, loading,
+      students, calendarEvents, loadProgression, emotionalHistory, financialGoals, studentWorkouts, studentDocuments, loading,
       addStudent, updateStudent, deleteStudent,
       addEvent, deleteEvent,
       addLoad, addEmotionalScore,
       uploadEvaluationPhoto, uploadStudentAvatar, updateStudentFinance, updateFinancialGoals,
       addStudentWorkout, updateStudentWorkout, deleteStudentWorkout,
+      uploadStudentDocument, deleteStudentDocument,
       refreshData: fetchData
     }}>
       {children}

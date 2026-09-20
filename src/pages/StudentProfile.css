@@ -32,10 +32,10 @@
 
 .back-button:hover {
   color: #fff;
-  background: rgba(0, 240, 255, 0.08);
-  border-color: rgba(0, 240, 255, 0.3);
-  box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
-  transform: translateX(-4px);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #383838;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transform: translateX(-3px);
 }
 
 .icon-btn-transparent {
@@ -80,8 +80,8 @@
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid var(--accent-color);
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.25);
+  border: 2px solid var(--accent-color);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   transition: all 0.3s ease;
 }
 
@@ -92,8 +92,8 @@
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: rgba(5, 5, 10, 0.75);
-  backdrop-filter: blur(3px);
+  background: rgba(18, 18, 18, 0.85);
+  backdrop-filter: blur(2px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -105,7 +105,7 @@
   opacity: 0;
   cursor: pointer;
   transition: all 0.25s ease;
-  border: 2px dashed rgba(0, 240, 255, 0.6);
+  border: 2px dashed var(--accent-color);
 }
 
 .profile-avatar-container:hover .avatar-upload-overlay {
@@ -230,7 +230,7 @@
 }
 
 .quick-edit-phone-btn:hover {
-  background: rgba(0, 240, 255, 0.15);
+  background: var(--accent-soft);
   color: var(--accent-color);
   border-color: var(--accent-color);
 }
@@ -243,39 +243,42 @@
 
 .profile-tabs {
   display: flex;
-  gap: 2rem;
+  gap: 1.75rem;
   margin-top: 1rem;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
+.profile-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+/* Abas Horizontais Sublinhadas SaaS B2B */
 .tab-btn {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 0;
-  color: var(--text-secondary);
+  padding: 0.85rem 0.25rem;
+  color: var(--text-muted); /* #757575 */
   font-weight: 500;
-  position: relative;
-  transition: all 0.2s;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  transition: color 0.2s ease, border-color 0.2s ease;
   cursor: pointer;
+  white-space: nowrap;
+  font-size: 0.925rem;
 }
 
 .tab-btn:hover {
-  color: var(--text-primary);
+  color: #B0B0B0;
 }
 
+/* Aba Ativa: texto em branco sólido, em negrito, linha inferior sólida de 3px em Laranja Vibrante */
 .tab-btn.active {
-  color: var(--accent-color);
-}
-
-.tab-btn.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background-color: var(--accent-color);
-  border-radius: 3px 3px 0 0;
+  color: #FFFFFF;
+  font-weight: 700;
+  border-bottom: 3px solid var(--accent-color);
 }
 
 .profile-content {
@@ -637,9 +640,9 @@
 }
 
 .quick-tag-btn:hover {
-  background: rgba(0, 240, 255, 0.1);
+  background: var(--accent-soft);
   color: var(--accent-color);
-  border-color: rgba(0, 240, 255, 0.3);
+  border-color: var(--accent-color);
 }
 
 .exercise-rows-container {
@@ -653,8 +656,8 @@
 
 .exercise-builder-row {
   background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
   padding: 1rem;
   display: flex;
   flex-direction: column;
@@ -678,5 +681,360 @@
   .exercise-builder-grid {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+/* ==============================================================================
+   MÓDULO DE DOCUMENTOS E SAÚDE (EXAMES, ATESTADOS, MEDICAÇÕES)
+   ============================================================================== */
+.documents-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.documents-tab-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.section-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+.documents-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.category-pills {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.category-pill {
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.category-pill:hover {
+  color: #FFFFFF;
+  border-color: #404040;
+}
+
+.category-pill.active {
+  background: var(--accent-soft);
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+  font-weight: 600;
+}
+
+.doc-search-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #171717;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+  min-width: 260px;
+}
+
+.doc-search-box .search-icon {
+  color: var(--text-secondary);
+}
+
+.doc-search-input {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  width: 100%;
+}
+
+.doc-search-input:focus {
+  outline: none;
+}
+
+/* Grid de Documentos */
+.documents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.doc-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  box-shadow: var(--card-shadow);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.doc-card:hover {
+  border-color: #383838;
+  transform: translateY(-2px);
+}
+
+.doc-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.doc-type-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.doc-type-badge.pdf {
+  background: rgba(229, 57, 53, 0.15);
+  color: #E53935;
+  border: 1px solid rgba(229, 57, 53, 0.3);
+}
+
+.doc-type-badge.img {
+  background: rgba(41, 182, 246, 0.15);
+  color: #29B6F6;
+  border: 1px solid rgba(41, 182, 246, 0.3);
+}
+
+.doc-category-tag {
+  font-size: 0.72rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.doc-category-tag.cat-exame {
+  color: #29B6F6;
+  border-color: rgba(41, 182, 246, 0.25);
+  background: rgba(41, 182, 246, 0.08);
+}
+
+.doc-category-tag.cat-atestado {
+  color: #00C853;
+  border-color: rgba(0, 200, 83, 0.25);
+  background: rgba(0, 200, 83, 0.08);
+}
+
+.doc-category-tag.cat-medicacao {
+  color: #FFB300;
+  border-color: rgba(255, 179, 0, 0.25);
+  background: rgba(255, 179, 0, 0.08);
+}
+
+.doc-category-tag.cat-relatorio-medico {
+  color: #FF7043;
+  border-color: rgba(255, 112, 67, 0.25);
+  background: rgba(255, 112, 67, 0.08);
+}
+
+.doc-card-body {
+  flex: 1;
+}
+
+.doc-card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+  line-height: 1.35;
+}
+
+.doc-filename-sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.doc-card-notes {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  line-height: 1.4;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+}
+
+.doc-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-color);
+  padding-top: 0.6rem;
+}
+
+.doc-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.doc-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.825rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.doc-action-btn.view-btn {
+  flex: 1;
+  background: var(--accent-soft);
+  color: var(--accent-color);
+  border: 1px solid rgba(255, 87, 34, 0.3);
+}
+
+.doc-action-btn.view-btn:hover {
+  background: var(--accent-color);
+  color: #FFFFFF;
+}
+
+.doc-action-btn.delete-btn {
+  background: rgba(229, 57, 53, 0.08);
+  color: #E53935;
+  border: 1px solid rgba(229, 57, 53, 0.25);
+  padding: 0.45rem 0.6rem;
+}
+
+.doc-action-btn.delete-btn:hover {
+  background: #E53935;
+  color: #FFFFFF;
+}
+
+/* Dropzone no Modal de Documentos */
+.doc-file-dropzone {
+  border: 2px dashed var(--border-color);
+  border-radius: 8px;
+  background: #171717;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  transition: border-color 0.2s ease;
+  cursor: pointer;
+}
+
+.doc-file-dropzone:hover {
+  border-color: var(--accent-color);
+}
+
+.doc-dropzone-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.doc-dropzone-label .dropzone-icon {
+  color: var(--accent-color);
+}
+
+.dropzone-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.dropzone-text strong {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.dropzone-text span {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.selected-file-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.empty-docs-card {
+  text-align: center;
+  padding: 3rem 1.5rem;
+}
+
+.empty-docs-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.empty-docs-icon-badge {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.empty-docs-content h4 {
+  color: var(--text-primary);
+  font-size: 1.1rem;
+}
+
+.empty-docs-content p {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
 

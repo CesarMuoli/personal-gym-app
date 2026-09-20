@@ -44,9 +44,9 @@
 }
 
 .stat-card.clickable:hover {
-  transform: translateY(-4px);
-  border-color: rgba(0, 240, 255, 0.35);
-  box-shadow: 0 10px 30px rgba(0, 240, 255, 0.12);
+  transform: translateY(-3px);
+  border-color: #383838;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
 .stat-card.clickable:active {

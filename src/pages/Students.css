@@ -38,7 +38,7 @@
 .search-input:focus {
   outline: none;
   border-color: var(--accent-color);
-  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+  box-shadow: 0 0 0 2px rgba(255, 87, 34, 0.2);
 }
 
 .icon-btn-square {
@@ -58,14 +58,13 @@
 
 .icon-btn-square:hover {
   background-color: var(--bg-secondary);
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: #383838;
 }
 
 .icon-btn-square.active {
-  background: rgba(0, 240, 255, 0.1);
+  background: var(--accent-soft);
   border-color: var(--accent-color);
   color: var(--accent-color);
-  box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
 }
 
 .filter-wrapper {
@@ -83,15 +82,15 @@
   top: calc(100% + 8px);
   right: 0;
   width: 280px;
-  border-radius: 14px;
+  border-radius: 10px;
   padding: 1.25rem;
   z-index: 50;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  background: rgba(10, 15, 28, 0.95);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 240, 255, 0.1);
-  border: 1px solid rgba(0, 240, 255, 0.2);
+  background: var(--bg-secondary);
+  box-shadow: var(--modal-shadow);
+  border: 1px solid var(--border-color);
 }
 
 .filter-dropdown-header {
@@ -159,7 +158,7 @@
 }
 
 .filter-option.selected {
-  background: rgba(0, 240, 255, 0.08);
+  background: var(--accent-soft);
   color: var(--accent-color);
   font-weight: 600;
 }
@@ -188,10 +187,10 @@
 }
 
 .status-pill.active {
-  background: rgba(0, 240, 255, 0.15);
+  background: var(--accent-soft);
   color: var(--accent-color);
   font-weight: 600;
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.1);
+  border: 1px solid rgba(255, 87, 34, 0.3);
 }
 
 .reset-filter-btn {
@@ -280,8 +279,8 @@
 
 .student-action-btn.edit:hover {
   color: var(--accent-color);
-  border-color: rgba(0, 240, 255, 0.3);
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
+  border-color: var(--accent-color);
+  background: var(--accent-soft);
 }
 
 .student-action-btn.whatsapp {
@@ -294,15 +293,14 @@
   background: rgba(37, 211, 102, 0.25);
   color: #25d366;
   border-color: #25d366;
-  box-shadow: 0 0 10px rgba(37, 211, 102, 0.35);
+  box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);
   transform: translateY(-2px);
 }
 
 .student-action-btn.delete:hover {
   color: var(--danger);
-  border-color: rgba(239, 68, 68, 0.3);
-  background: rgba(239, 68, 68, 0.1);
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
+  border-color: rgba(229, 57, 53, 0.3);
+  background: rgba(229, 57, 53, 0.1);
 }
 
 .icon-btn-transparent {

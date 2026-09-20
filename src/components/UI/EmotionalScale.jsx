@@ -13,7 +13,7 @@ const SCORE_DETAILS = [
   { level: 7, label: 'Muito Bom', desc: 'Ótima energia, foco e rendimento físico', icon: Smile, color: '#34d399' },
   { level: 8, label: 'Forte & Disposto', desc: 'Excelente resposta muscular e ânimo elevado', icon: Smile, color: '#34d399' },
   { level: 9, label: 'Excelente', desc: 'Desempenho no topo e vigor físico alto', icon: Sparkles, color: '#2dd4bf' },
-  { level: 10, label: 'Excelente / No Topo', desc: 'Sensação impecável, máxima energia!', icon: Sparkles, color: '#00f0ff' }
+  { level: 10, label: 'Excelente / No Topo', desc: 'Sensação impecável, máxima energia!', icon: Sparkles, color: '#00c853' }
 ];
 
 const EmotionalScale = ({ onChange, value = null }) => {

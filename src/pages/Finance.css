@@ -26,83 +26,62 @@
   transform: translateY(-2px);
 }
 
-/* 1. Faturamento Mensal - Cyan Neon */
-.glow-card-cyan {
-  border: 1px solid rgba(0, 240, 255, 0.25) !important;
-  background: linear-gradient(135deg, rgba(0, 240, 255, 0.08) 0%, rgba(18, 18, 26, 0.85) 100%) !important;
-  box-shadow: 0 0 25px rgba(0, 240, 255, 0.06);
+/* Cards de Métricas SaaS B2B */
+.glow-card-cyan,
+.glow-card-purple,
+.glow-card-green,
+.glow-card-amber {
+  border: 1px solid var(--border-color) !important;
+  background: var(--bg-card) !important;
+  box-shadow: var(--card-shadow) !important;
+  border-radius: 10px;
 }
 
 .metric-icon.revenue-icon {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: 8px;
   color: var(--accent-color);
-  background: rgba(0, 240, 255, 0.12);
-  border: 1px solid rgba(0, 240, 255, 0.3);
-  box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+  background: var(--accent-soft);
+  border: 1px solid rgba(255, 87, 34, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 0.85rem;
-}
-
-/* 2. Ticket Médio - Cyber Purple Neon */
-.glow-card-purple {
-  border: 1px solid rgba(168, 85, 247, 0.25) !important;
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(18, 18, 26, 0.85) 100%) !important;
-  box-shadow: 0 0 25px rgba(168, 85, 247, 0.06);
 }
 
 .metric-icon.ticket-icon {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
-  color: #c084fc;
-  background: rgba(168, 85, 247, 0.14);
-  border: 1px solid rgba(168, 85, 247, 0.3);
-  box-shadow: 0 0 15px rgba(168, 85, 247, 0.2);
+  border-radius: 8px;
+  color: var(--accent-color);
+  background: var(--accent-soft);
+  border: 1px solid rgba(255, 87, 34, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 0.85rem;
 }
 
-/* 3. Meta Mensal - Emerald Green Neon */
-.glow-card-green {
-  border: 1px solid rgba(16, 185, 129, 0.25) !important;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(18, 18, 26, 0.85) 100%) !important;
-  box-shadow: 0 0 25px rgba(16, 185, 129, 0.06);
-}
-
 .metric-icon.goal-monthly-icon {
   width: 40px;
   height: 40px;
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--success);
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
+  background: var(--success-soft);
+  border: 1px solid rgba(0, 200, 83, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* 4. Meta Trimestral - Solar Amber/Gold Neon */
-.glow-card-amber {
-  border: 1px solid rgba(245, 158, 11, 0.25) !important;
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(18, 18, 26, 0.85) 100%) !important;
-  box-shadow: 0 0 25px rgba(245, 158, 11, 0.06);
-}
-
 .metric-icon.goal-quarterly-icon {
   width: 40px;
   height: 40px;
-  border-radius: 10px;
-  color: #fbbf24;
-  background: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  box-shadow: 0 0 12px rgba(245, 158, 11, 0.2);
+  border-radius: 8px;
+  color: var(--success);
+  background: var(--success-soft);
+  border: 1px solid rgba(0, 200, 83, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -190,13 +169,11 @@
 }
 
 .progress-fill-green {
-  background: linear-gradient(90deg, #10b981, #00ff88);
-  box-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
+  background: var(--success);
 }
 
 .progress-fill-amber {
-  background: linear-gradient(90deg, #f59e0b, #fbbf24);
-  box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
+  background: var(--accent-color);
 }
 
 .metric-sub-row {
@@ -214,9 +191,8 @@
 }
 
 .goal-reached-text {
-  color: #34d399;
+  color: var(--success);
   font-weight: 600;
-  text-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
 }
 
 /* ==========================================================================
@@ -280,21 +256,21 @@
 }
 
 .status-count-badge.paid {
-  background: rgba(16, 185, 129, 0.2);
+  background: var(--success-soft);
   color: var(--success);
-  border: 1px solid rgba(16, 185, 129, 0.35);
+  border: 1px solid rgba(0, 200, 83, 0.3);
 }
 
 .status-count-badge.upcoming {
-  background: rgba(0, 240, 255, 0.15);
+  background: var(--accent-soft);
   color: var(--accent-color);
-  border: 1px solid rgba(0, 240, 255, 0.35);
+  border: 1px solid rgba(255, 87, 34, 0.3);
 }
 
 .status-count-badge.late {
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(229, 57, 53, 0.12);
   color: var(--danger);
-  border: 1px solid rgba(239, 68, 68, 0.35);
+  border: 1px solid rgba(229, 57, 53, 0.3);
 }
 
 .status-total-val {
@@ -314,20 +290,17 @@
   color: var(--danger);
 }
 
-/* Bordas iluminadas para cada coluna */
+/* Bordas superiores para cada coluna */
 .glow-border-green {
   border-top: 3px solid var(--success) !important;
-  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.05);
 }
 
 .glow-border-cyan {
   border-top: 3px solid var(--accent-color) !important;
-  box-shadow: 0 4px 20px rgba(0, 240, 255, 0.05);
 }
 
 .glow-border-red {
   border-top: 3px solid var(--danger) !important;
-  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.05);
 }
 
 /* ==========================================================================
