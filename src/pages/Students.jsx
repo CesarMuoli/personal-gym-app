@@ -19,7 +19,7 @@ import {
   MessageCircle,
   Camera
 } from 'lucide-react';
-import { getStudentAvatar } from '../utils/avatarUtils';
+import { getStudentAvatar, getDefaultRealAvatar } from '../utils/avatarUtils';
 import { formatPhone, getWhatsAppUrl } from '../utils/phoneUtils';
 import './Students.css';
 
@@ -273,7 +273,12 @@ const Students = () => {
               <Card key={student.id} className="student-card">
                 <div className="student-card-header flex-between">
                   <div className="student-avatar-wrapper">
-                    <img src={getStudentAvatar(student)} alt={student.name} className="student-avatar" />
+                    <img 
+                      src={getStudentAvatar(student)} 
+                      alt={student.name} 
+                      className="student-avatar" 
+                      onError={(e) => { e.currentTarget.src = getDefaultRealAvatar(student?.id || student?.name); }}
+                    />
                     <span className={`status-indicator ${student.active ? 'active' : 'inactive'}`}></span>
                   </div>
                   <div className="card-actions">
@@ -387,7 +392,8 @@ const Students = () => {
               <img 
                 src={getStudentAvatar(editingStudent)} 
                 alt={editingStudent.name} 
-                style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--accent-color)', boxShadow: '0 0 10px rgba(0,240,255,0.2)' }} 
+                style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--accent-color)', boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }} 
+                onError={(e) => { e.currentTarget.src = getDefaultRealAvatar(editingStudent?.id || editingStudent?.name); }}
               />
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '500' }}>Foto de Perfil do Aluno</span>

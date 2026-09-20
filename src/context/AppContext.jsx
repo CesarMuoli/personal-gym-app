@@ -136,7 +136,7 @@ export const AppProvider = ({ children }) => {
       toast.error('Erro ao atualizar dados do aluno.');
       return null;
     }
-    setStudents(prev => prev.map(s => s.id === studentId ? { ...s, ...data[0] } : s));
+    setStudents(prev => prev.map(s => String(s.id) === String(studentId) ? { ...s, ...data[0] } : s));
     toast.success('Aluno atualizado com sucesso!');
     return data[0];
   };
@@ -157,6 +157,7 @@ export const AppProvider = ({ children }) => {
     setLoadProgression(prev => prev.filter(l => String(l.student_id) !== String(studentId)));
     setEmotionalHistory(prev => prev.filter(e => String(e.student_id) !== String(studentId)));
     setStudentWorkouts(prev => prev.filter(w => String(w.student_id) !== String(studentId)));
+    setStudentDocuments(prev => prev.filter(d => String(d.student_id) !== String(studentId)));
     toast.success('Aluno removido com sucesso!');
     return true;
   };
@@ -229,8 +230,11 @@ export const AppProvider = ({ children }) => {
   };
 
   const uploadEvaluationPhoto = async (studentId, type, file) => {
-    // Sanitização e isolamento seguro por pasta de usuário
-    const userId = session?.user?.id || 'public';
+    const userId = session?.user?.id;
+    if (!userId) {
+      toast.error('Sessão expirada. Faça login novamente.');
+      return null;
+    }
     const rawExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
     const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
     const fileExt = allowedExtensions.includes(rawExt) ? rawExt : 'jpg';
@@ -277,7 +281,7 @@ export const AppProvider = ({ children }) => {
       .from('students')
       .update({ [column]: photoUrl })
       .eq('id', studentId)
-      .eq('user_id', session?.user?.id);
+      .eq('user_id', userId);
       
     if (updateError) {
       console.error('Update student photo error:', updateError);
@@ -286,14 +290,18 @@ export const AppProvider = ({ children }) => {
     }
     
     // Atualização otimista
-    setStudents(prev => prev.map(s => s.id === studentId ? { ...s, [column]: photoUrl } : s));
+    setStudents(prev => prev.map(s => String(s.id) === String(studentId) ? { ...s, [column]: photoUrl } : s));
     toast.success('Foto de avaliação salva com segurança!');
     fetchData();
     return photoUrl;
   };
 
   const uploadStudentAvatar = async (studentId, file) => {
-    const userId = session?.user?.id || 'public';
+    const userId = session?.user?.id;
+    if (!userId) {
+      toast.error('Sessão expirada. Faça login novamente.');
+      return null;
+    }
     const rawExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
     const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
     const fileExt = allowedExtensions.includes(rawExt) ? rawExt : 'jpg';
@@ -337,7 +345,7 @@ export const AppProvider = ({ children }) => {
       .from('students')
       .update({ avatar: photoUrl })
       .eq('id', studentId)
-      .eq('user_id', session?.user?.id);
+      .eq('user_id', userId);
       
     if (updateError) {
       console.error('Update student avatar error:', updateError);
@@ -345,14 +353,14 @@ export const AppProvider = ({ children }) => {
       return null;
     }
     
-    setStudents(prev => prev.map(s => s.id === studentId ? { ...s, avatar: photoUrl } : s));
+    setStudents(prev => prev.map(s => String(s.id) === String(studentId) ? { ...s, avatar: photoUrl } : s));
     toast.success('Foto do aluno atualizada com sucesso!');
     fetchData();
     return photoUrl;
   };
 
   const updateStudentFinance = async (studentId, financeData) => {
-    setStudents(prev => prev.map(s => s.id === studentId ? { ...s, ...financeData } : s));
+    setStudents(prev => prev.map(s => String(s.id) === String(studentId) ? { ...s, ...financeData } : s));
 
     const { error } = await supabase
       .from('students')
@@ -621,7 +629,10 @@ export const AppProvider = ({ children }) => {
     const userId = session?.user?.id;
     if (!userId) return false;
 
-    setStudentDocuments(prev => prev.filter(d => d.id !== documentId));
+    // Localizar documento na memória antes da exclusão para obter a URL do arquivo
+    const docToDelete = studentDocuments.find(d => String(d.id) === String(documentId));
+
+    setStudentDocuments(prev => prev.filter(d => String(d.id) !== String(documentId)));
 
     const { error } = await supabase
       .from('student_documents')
@@ -634,6 +645,20 @@ export const AppProvider = ({ children }) => {
       toast.error('Não foi possível remover o documento do banco.');
       fetchData();
       return false;
+    }
+
+    // Deletar também o arquivo físico no Supabase Storage caso exista
+    if (docToDelete?.file_url) {
+      try {
+        const urlObj = new URL(docToDelete.file_url);
+        const pathSegments = urlObj.pathname.split('evaluations/');
+        if (pathSegments.length > 1) {
+          const filePath = decodeURIComponent(pathSegments[1].split('?')[0]);
+          await supabase.storage.from('evaluations').remove([filePath]);
+        }
+      } catch (storageErr) {
+        console.warn('Aviso ao remover anexo do storage:', storageErr);
+      }
     }
 
     toast.success('Documento removido com sucesso!');

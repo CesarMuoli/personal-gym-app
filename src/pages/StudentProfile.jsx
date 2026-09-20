@@ -12,7 +12,7 @@ import {
   ClipboardList, UploadCloud, ExternalLink, Search, File
 } from 'lucide-react';
 import { getLocalDateString } from '../utils/dateUtils';
-import { getStudentAvatar } from '../utils/avatarUtils';
+import { getStudentAvatar, getDefaultRealAvatar } from '../utils/avatarUtils';
 import { formatPhone, getWhatsAppUrl } from '../utils/phoneUtils';
 import './StudentProfile.css';
 
@@ -546,6 +546,7 @@ const StudentProfile = () => {
                 src={getStudentAvatar(student)} 
                 alt={student.name} 
                 className="profile-avatar" 
+                onError={(e) => { e.currentTarget.src = getDefaultRealAvatar(student?.id || student?.name); }}
               />
               <label 
                 htmlFor="avatar-upload-input" 
