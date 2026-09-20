@@ -25,7 +25,7 @@ Realizamos uma auditoria minuciosa, crítica e recursiva em todos os subsistemas
 - **Exclusão em Cascata (`ON DELETE CASCADE`):** Ao remover um aluno, documentos, fichas de treino, agendamentos, cargas e notas emocionais vinculadas são removidos de forma limpa, sem deixar registros órfãos.
 
 ### C. Qualidade de Código & Build — 100% Aprovado
-- **Build de Produção:** Vite build concluído em ~1.6s com código minificado e otimizado.
+- **Build de Produção:** Vite build concluído em ~2.2s com código minificado e otimizado.
 - **Linter (oxlint):** 0 erros no projeto inteiro.
 - **Persistência Robusta:** Metas financeiras e documentos contam com persistência tripla e atualizações otimistas no React para feedback instantâneo de interface.
 
@@ -67,13 +67,20 @@ Atualizamos toda a interface global de acordo com as diretrizes B2B executivas:
 ### 4. Gestão Financeira com Metas e Prazos
 - Métricas de faturamento recebido x pendente, dias restantes calculados corretamente e reversão de baixa de pagamento.
 
+### 5. Blindagem e Resolução de Inconsistências
+- **Tipagem de IDs em Updates:** Unificação de comparações de ID com `String(s.id) === String(studentId)` em fotos, avatares e financeiro, evitando falha de atualização otimista entre strings e números.
+- **Exclusão de Arquivos no Storage:** Implementada deleção física do anexo no bucket `evaluations` ao remover documentos médicos.
+- **Limpeza em Cascata:** Adicionado filtro de documentos locais ao remover alunos.
+- **Fallbacks Defensivos de Imagem:** Adicionado `onError` em todos os avatares contra links quebrados ou instabilidade de rede.
+- **Purificação Visual:** Remoção de sombras ciano inline residuais no modal de alunos.
+
 ---
 
 ## 🗂️ 3. Mapa de Arquivos Principais
 
 | Arquivo | Função Principal |
 | :--- | :--- |
-| [`src/context/AppContext.jsx`](file:///c:/Projetos/antigravity/personal-gym/src/context/AppContext.jsx) | Estado global, multi-tenant, métodos de documentos médicos e chamadas ao Supabase. |
+| [`src/context/AppContext.jsx`](file:///c:/Projetos/antigravity/personal-gym/src/context/AppContext.jsx) | Estado global, multi-tenant, métodos de documentos médicos, fotos e chamadas ao Supabase. |
 | [`src/pages/StudentProfile.jsx`](file:///c:/Projetos/antigravity/personal-gym/src/pages/StudentProfile.jsx) | Perfil com abas sublinhadas: Treinos, Cargas, Fotos, Fichas de Treino e Saúde & Anexos. |
 | [`src/pages/StudentProfile.css`](file:///c:/Projetos/antigravity/personal-gym/src/pages/StudentProfile.css) | Estilização das abas sublinhadas, acervo de documentos e dropzone de upload. |
 | [`src/pages/Finance.jsx`](file:///c:/Projetos/antigravity/personal-gym/src/pages/Finance.jsx) | Gestão financeira, 3 colunas de pagamentos, metas com cores SaaS (#00C853 e #FF5722). |
@@ -86,22 +93,22 @@ Atualizamos toda a interface global de acordo com as diretrizes B2B executivas:
 
 ---
 
-## ⚡ 4. Instrução Importante para o Banco de Dados (Supabase)
+## ⚡ 4. Instrução para o Banco de Dados (Supabase)
 
-Para ativar a nova tabela de documentos no seu banco do Supabase, basta:
-1. Abrir o painel do Supabase (`SQL Editor`).
-2. Copiar o conteúdo do arquivo [`SCRIPT_MESTRE_BLINDADO.sql`](file:///c:/Projetos/antigravity/personal-gym/SCRIPT_MESTRE_BLINDADO.sql) (ou apenas a seção `7. TABELA: student_documents`).
-3. Clicar em **Run**.
+Para garantir que a tabela `student_documents` esteja sincronizada no Supabase:
+1. Abra o painel do seu projeto no **Supabase** e acesse o **SQL Editor**.
+2. Copie o script do arquivo [`SCRIPT_MESTRE_BLINDADO.sql`](file:///c:/Projetos/antigravity/personal-gym/SCRIPT_MESTRE_BLINDADO.sql) (seção `7. TABELA: student_documents`).
+3. Clique em **Run**.
 
 ---
 
-## 🌅 5. Onde Procurar Este Resumo e Como Retomar
+## 🌅 5. Onde Procurar Este Resumo e Como Retomar Amanhã
 
 ### 📍 Onde este resumo está salvo:
 👉 **`STATUS_DO_PROJETO.md`**  
 Caminho completo: `c:\Projetos\antigravity\personal-gym\STATUS_DO_PROJETO.md`
 
-### 💬 O que falar para a IA ao iniciar o chat:
+### 💬 O que falar para a IA amanhã ao iniciar o chat:
 Basta copiar e colar a mensagem abaixo:
 
 > **"Olá! Leia o arquivo STATUS_DO_PROJETO.md para recapitular onde paramos e vamos continuar a partir daí."**
